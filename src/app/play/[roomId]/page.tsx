@@ -153,9 +153,11 @@ export default function PlayPage() {
       const { message } = response;
       switch (message) {
         case "Room not found":
+          resetRoom();
           router.push("/");
           break;
         case "Player not found":
+          resetRoom();
           router.push(`/join/${roomId}`);
           break;
         default:

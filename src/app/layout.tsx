@@ -4,7 +4,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import MainWarper from "@/components/MainWarper";
 import Navbar from "@/components/Navbar";
 
-import "./globals.css";
+import "./tailwind.css";
+import "./globals.scss";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

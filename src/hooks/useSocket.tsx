@@ -1,47 +1,66 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { io } from "socket.io-client";
+import { io, type Socket } from "socket.io-client";
 
-const socket = io(process.env.NEXT_PUBLIC_API_URL!, {
-  autoConnect: false,
-});
+let socketSingleton: Socket | null = null;
+
+function getSocket(): Socket {
+  if (!socketSingleton) {
+    socketSingleton = io(process.env.NEXT_PUBLIC_API_URL!, {
+      autoConnect: false,
+    });
+  }
+  return socketSingleton;
+}
 
 export default function useSocket() {
   const [isConnected, setIsConnected] = useState(false);
   const { data: session } = useSession();
 
   useEffect(() => {
-    socket.on("connect", () => {
-      setIsConnected(true);
-    });
+    const socket = getSocket();
 
-    socket.on("disconnect", () => {
-      setIsConnected(false);
-    });
+    const onConnect = () => setIsConnected(true);
+    const onDisconnect = () => setIsConnected(false);
+
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+    setIsConnected(socket.connected);
 
     return () => {
-      socket.off("connect");
-      socket.off("disconnect");
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
     };
   }, []);
 
   useEffect(() => {
     if (!session) {
+      getSocket().disconnect();
+    }
+  }, [session]);
+
+  const socketConnect = useCallback(() => {
+    if (!session) return;
+    const socket = getSocket();
+    if (!socket.connected) {
+      socket.connect();
+    }
+  }, [session]);
+
+  const socketDisconnect = useCallback(() => {
+    if (!session) return;
+    const socket = getSocket();
+    if (socket.connected) {
       socket.disconnect();
     }
   }, [session]);
 
-  const socketConnect = () => {
-    if (!session) return;
-    socket?.connect();
+  return {
+    socket: getSocket(),
+    isConnected,
+    socketConnect,
+    socketDisconnect,
   };
-
-  const socketDisconnect = () => {
-    if (!session) return;
-    socket?.disconnect();
-  };
-
-  return { isConnected, socketConnect, socketDisconnect };
 }

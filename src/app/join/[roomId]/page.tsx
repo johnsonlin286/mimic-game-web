@@ -1,0 +1,149 @@
+"use client";
+
+import { use, useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+
+import { useRoomStore } from "@/store/room-state";
+import useSocket from "@/hooks/useSocket";
+import Container from "@/components/Container";
+import GoogleLoginBtn from "@/components/GoogleLoginBtn";
+import Modal from "@/components/Modal";
+import Input from "@/components/Input";
+
+interface JoinRoomFormData {
+  playerName: string;
+  roomPin: string;
+}
+
+interface JoinRoomError {
+  playerName?: string;
+  roomPin?: string;
+  generalError?: string;
+}
+
+let pendingDisconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+export default function JoinPage({ params }: { params: Promise<{ roomId: string }> }) {
+  const router = useRouter();
+  const leftAfterJoinSuccessRef = useRef(false);
+  const { roomId } = use(params);
+  const [joinRoomModalOpen, setJoinRoomModalOpen] = useState(false);
+  const [joinRoomFormData, setJoinRoomFormData] = useState<JoinRoomFormData>({
+    playerName: "",
+    roomPin: "",
+  });
+  const [joinRoomError, setJoinRoomError] = useState<JoinRoomError | null>(null);
+  const { data: session } = useSession();
+  const { socket, isConnected, socketConnect, socketDisconnect } = useSocket();
+  const { setRoom, resetRoom } = useRoomStore();
+
+  useEffect(() => {
+    leftAfterJoinSuccessRef.current = false;
+  }, [roomId]);
+
+  useEffect(() => {
+    if (pendingDisconnectTimer) {
+      clearTimeout(pendingDisconnectTimer);
+      pendingDisconnectTimer = null;
+    }
+
+    return () => {
+      pendingDisconnectTimer = setTimeout(() => {
+        if (leftAfterJoinSuccessRef.current) return;
+        resetRoom();
+        socketDisconnect();
+      }, 100);
+    };
+  }, [resetRoom, socketDisconnect]);
+
+  useEffect(() => {
+    if (!session) return;
+    setJoinRoomFormData((prev) => ({
+      ...prev,
+      playerName: session.user?.name || "",
+    }));
+  }, [session])
+
+  const handleJoinRoom = useCallback(() => {
+    if (!roomId || !session?.user?.email) return;
+    if (!isConnected) {
+      socketConnect();
+    }
+    const { playerName, roomPin } = joinRoomFormData;
+    const payload: RoomJoinPayload = {
+      roomId: roomId,
+      playerEmail: session.user.email,
+      playerName: playerName,
+      roomPin: roomPin,
+    }
+    socket?.emit("room:join", payload)
+      .on("room-join-invalid-pin", (response: RoomJoinResponse) => {
+        const { message } = response;
+        setJoinRoomError({ ...joinRoomError, roomPin: message });
+      })
+      .on("room-join-success", (response: RoomJoinResponse) => {
+        const { roomId, roomDisplayName } = response.data.room;
+        setRoom({ roomId, roomDisplayName } as RoomState);
+        setJoinRoomFormData({
+          playerName: "",
+          roomPin: "",
+        });
+        setJoinRoomModalOpen(false);
+        leftAfterJoinSuccessRef.current = true;
+        router.push(`/play/${roomId}`);
+      });
+  }, [session, isConnected, joinRoomFormData, joinRoomError, roomId, socket, socketConnect, setRoom, router]);
+  
+  const formValidation = useCallback(() => {
+    setJoinRoomError(null);
+    const errors: JoinRoomError = {};
+    const { playerName, roomPin } = joinRoomFormData;
+    if (!playerName || playerName.trim() === "") {
+      errors.playerName = "Player name is required";
+    } else if (playerName.length < 3) {
+      errors.playerName = "Player name must be at least 3 characters long";
+    }
+    if (!roomPin || roomPin.trim() === "") {
+      errors.roomPin = "Room pin is required";
+    } else if (roomPin.length !== 4) {
+      errors.roomPin = "Invalid room pin!";
+    }
+    setJoinRoomError(errors);
+    if (Object.keys(errors).length > 0) return;
+    handleJoinRoom();
+  }, [joinRoomFormData, handleJoinRoom]);
+
+  return (
+    <Container>
+      <div className="flex flex-col items-center justify-center w-full h-full">
+        <div className="flex flex-col items-center gap-2 justify-center bg-white rounded-lg shadow-md p-4">
+          {!session ? (
+            <>
+              <h2 className="text-2xl font-bold">Join Room</h2>
+              <p className="text-sm text-gray-500">Please login to join the room</p>
+              <GoogleLoginBtn />
+            </>
+          ) : (
+            <>
+              <h2 className="text-2xl font-bold">Join Room</h2>
+              <p className="text-sm text-gray-500">Hello {session.user?.name}</p>
+              <p className="text-sm text-gray-500">Room ID: {roomId}</p>
+              <button onClick={() => setJoinRoomModalOpen(true)} className="bg-sky-500 text-white px-4 py-2 rounded-full cursor-pointer">
+                Join Room
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+      <Modal isOpen={joinRoomModalOpen} onClose={() => setJoinRoomModalOpen(false)}>
+        <div className="flex flex-col gap-4">
+          <h2 className="text-2xl font-bold">Join Room</h2>
+          <Input placeholder="Player Name" value={joinRoomFormData.playerName} onChange={(e) => setJoinRoomFormData({ ...joinRoomFormData, playerName: e.target.value })} error={joinRoomError?.playerName} />
+          <Input placeholder="Room Pin" value={joinRoomFormData.roomPin} onChange={(e) => setJoinRoomFormData({ ...joinRoomFormData, roomPin: e.target.value })} error={joinRoomError?.roomPin} />
+          <button onClick={formValidation} className="bg-sky-500 text-white px-4 py-2 rounded-full cursor-pointer">Join Room</button>
+        </div>
+      </Modal>
+    </Container>
+  )
+}

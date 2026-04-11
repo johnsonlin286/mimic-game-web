@@ -74,8 +74,36 @@ export default function Home() {
         });
         setCreateRoomModalOpen(false);
         router.push(`/play/${roomId}`);
+      })
+      .on("room-create-failed", (response: RoomCreateResponse) => {
+        const { message } = response;
+        switch (message) {
+          case "Creator email is required!":
+            setCreateRoomError({ ...createRoomError, generalError: "Creator email is required!" });
+            break;
+          case "Room name is required!":
+            setCreateRoomError({ ...createRoomError, roomName: "Room name is required!" });
+          case "Room name must be between 3 and 20 characters!":
+            setCreateRoomError({ ...createRoomError, roomName: "Room name must be between 3 and 20 characters!" });
+            break;
+          case "Room max players is required!":
+            setCreateRoomError({ ...createRoomError, roomMaxPlayers: "Room max players is required!" });
+            break;
+          case "Room max players must be between 3 and 10!":
+            setCreateRoomError({ ...createRoomError, roomMaxPlayers: "Room max players must be between 3 and 10!" });
+            break;
+          case "Room pin is required!":
+            setCreateRoomError({ ...createRoomError, roomPin: "Room pin is required!" });
+            break;
+          case "Room pin must be 4 characters!":
+            setCreateRoomError({ ...createRoomError, roomPin: "Room pin must be 4 characters!" });
+            break;
+          default:
+            setCreateRoomError({ ...createRoomError, generalError: "An error occurred while creating the room" });
+            break;
+        }
       });
-  }, [session, isConnected, createRoomFormData, socket, socketConnect, setRoom, router]);
+  }, [session, isConnected, createRoomFormData, createRoomError, socket, socketConnect, setRoom, router]);
 
   const formValidation = useCallback(() => {
     setCreateRoomError(null);
@@ -85,6 +113,8 @@ export default function Home() {
       errors.roomName = "Room name is required";
     } else if (roomName.length < 3) {
       errors.roomName = "Room name must be at least 3 characters long";
+    } else if (roomName.length > 20) {
+      errors.roomName = "Room name must be less than 20 characters long";
     }
     if (!roomMaxPlayers || roomMaxPlayers < 3 || roomMaxPlayers > 10) {
       errors.roomMaxPlayers = "Room max players must be between 3 and 10";
@@ -107,6 +137,7 @@ export default function Home() {
       <Modal isOpen={createRoomModalOpen} onClose={() => setCreateRoomModalOpen(false)}>
         <div className="flex flex-col gap-4">
           <h2 className="text-2xl font-bold">Create Room</h2>
+          {createRoomError?.generalError && <p className="text-red-500">{createRoomError.generalError}</p>}
           <Input placeholder="Room Name" value={createRoomFormData.roomName} onChange={(e) => setCreateRoomFormData({ ...createRoomFormData, roomName: e.target.value })} error={createRoomError?.roomName} />
           <Input type="number" placeholder="Room Max Players" min={3} max={10} value={createRoomFormData.roomMaxPlayers} onChange={(e) => setCreateRoomFormData({ ...createRoomFormData, roomMaxPlayers: parseInt(e.target.value) > 0 ? parseInt(e.target.value) : 3 })} error={createRoomError?.roomMaxPlayers} />
           <Input type="number" placeholder="Room Pin" value={createRoomFormData.roomPin} onChange={(e) => setCreateRoomFormData({ ...createRoomFormData, roomPin: e.target.value })} error={createRoomError?.roomPin} />

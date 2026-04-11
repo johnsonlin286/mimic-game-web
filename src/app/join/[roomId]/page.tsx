@@ -78,9 +78,22 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
       roomPin: roomPin,
     }
     socket?.emit("room:join", payload)
-      .on("room-join-invalid-pin", (response: RoomJoinResponse) => {
+      .on("room-join-failed", (response: RoomJoinResponse) => {
         const { message } = response;
-        setJoinRoomError({ ...joinRoomError, roomPin: message });
+        switch (message) {
+          case "Room not found!":
+            setJoinRoomError({ ...joinRoomError, generalError: "Room not found" });
+            break;
+          case "Room is full!":
+            setJoinRoomError({ ...joinRoomError, generalError: "Player not found" });
+            break;
+          case "Invalid room pin!":
+            setJoinRoomError({ ...joinRoomError, roomPin: "Invalid room pin!" });
+            break;
+          default:
+            setJoinRoomError({ ...joinRoomError, generalError: "An error occurred while joining the room" });
+            break;
+        }
       })
       .on("room-join-success", (response: RoomJoinResponse) => {
         const { roomId, roomDisplayName } = response.data.room;
@@ -139,6 +152,7 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
       <Modal isOpen={joinRoomModalOpen} onClose={() => setJoinRoomModalOpen(false)}>
         <div className="flex flex-col gap-4">
           <h2 className="text-2xl font-bold">Join Room</h2>
+          {joinRoomError?.generalError && <p className="text-red-500">{joinRoomError.generalError}</p>}
           <Input placeholder="Player Name" value={joinRoomFormData.playerName} onChange={(e) => setJoinRoomFormData({ ...joinRoomFormData, playerName: e.target.value })} error={joinRoomError?.playerName} />
           <Input placeholder="Room Pin" value={joinRoomFormData.roomPin} onChange={(e) => setJoinRoomFormData({ ...joinRoomFormData, roomPin: e.target.value })} error={joinRoomError?.roomPin} />
           <button onClick={formValidation} className="bg-sky-500 text-white px-4 py-2 rounded-full cursor-pointer">Join Room</button>

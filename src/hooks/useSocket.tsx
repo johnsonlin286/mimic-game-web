@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { io, type Socket } from "socket.io-client";
 
@@ -16,6 +17,7 @@ function getSocket(): Socket {
 }
 
 export default function useSocket() {
+  const router = useRouter();
   const [isConnected, setIsConnected] = useState(false);
   const { data: session } = useSession();
 
@@ -38,8 +40,9 @@ export default function useSocket() {
   useEffect(() => {
     if (!session) {
       getSocket().disconnect();
+      router.push("/");
     }
-  }, [session]);
+  }, [session, router]);
 
   const socketConnect = useCallback(() => {
     if (!session) return;

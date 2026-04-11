@@ -1,4 +1,5 @@
 interface RoomCreatePayload {
+  playerName: string;
   creatorEmail: string;
   roomName: string;
   roomMaxPlayers: number;
@@ -6,14 +7,13 @@ interface RoomCreatePayload {
 }
 
 interface RoomResponseData {
-  room: {
-    roomId: string;
-    roomDisplayName: string;
-  }
-  player: {
-    playerEmail: string;
-    role: string;
-  }
+  creatorEmail: string;
+  roomDisplayName: string;
+  roomId: string;
+  roomMaxPlayers: number;
+  roomPlayers: RoomPlayerData[];
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface RoomCreateResponse {
@@ -38,15 +38,12 @@ interface RoomJoinResponse {
 interface RoomRejoinResponse {
   success: boolean;
   message: string;
-  data: {
-    room: RoomData;
-    player: RoomPlayerData;
-  };
+  data: RoomResponseData;
 }
 
 interface RoomLeavePayload {
   roomId: string;
-  playerEmail: string;
+  socketId: string;
 }
 
 interface RoomLeaveResponse {

@@ -10,6 +10,7 @@ import Container from "@/components/Container";
 import GoogleLoginBtn from "@/components/GoogleLoginBtn";
 import Modal from "@/components/Modal";
 import Input from "@/components/Input";
+import Button from "@/components/Button";
 
 interface JoinRoomFormData {
   playerName: string;
@@ -43,6 +44,14 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
   }, [roomId]);
 
   useEffect(() => {
+    if (!session) return;
+    setJoinRoomFormData((prev) => ({
+      ...prev,
+      playerName: session.user?.name || "",
+    }));
+  }, [session]);
+
+  useEffect(() => {
     if (pendingDisconnectTimer) {
       clearTimeout(pendingDisconnectTimer);
       pendingDisconnectTimer = null;
@@ -57,14 +66,6 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
     };
   }, [resetRoom, socketDisconnect]);
 
-  useEffect(() => {
-    if (!session) return;
-    setJoinRoomFormData((prev) => ({
-      ...prev,
-      playerName: session.user?.name || "",
-    }));
-  }, [session])
-
   const handleJoinRoom = useCallback(() => {
     if (!roomId || !session?.user?.email) return;
     if (!isConnected) {
@@ -73,8 +74,8 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
     const { playerName, roomPin } = joinRoomFormData;
     const payload: RoomJoinPayload = {
       roomId: roomId,
-      playerEmail: session.user.email,
       playerName: playerName,
+      playerEmail: session.user.email,
       roomPin: roomPin,
     }
     socket?.emit("room:join", payload)
@@ -96,7 +97,7 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
         }
       })
       .on("room-join-success", (response: RoomJoinResponse) => {
-        const { roomId, roomDisplayName } = response.data.room;
+        const { roomId, roomDisplayName } = response.data;
         setRoom({ roomId, roomDisplayName } as RoomState);
         setJoinRoomFormData({
           playerName: "",
@@ -142,9 +143,9 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
               <h2 className="text-2xl font-bold">Join Room</h2>
               <p className="text-sm text-gray-500">Hello {session.user?.name}</p>
               <p className="text-sm text-gray-500">Room ID: {roomId}</p>
-              <button onClick={() => setJoinRoomModalOpen(true)} className="bg-sky-500 text-white px-4 py-2 rounded-full cursor-pointer">
+              <Button onClick={() => setJoinRoomModalOpen(true)}>
                 Join Room
-              </button>
+              </Button>
             </>
           )}
         </div>
@@ -153,9 +154,9 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
         <div className="flex flex-col gap-4">
           <h2 className="text-2xl font-bold">Join Room</h2>
           {joinRoomError?.generalError && <p className="text-red-500">{joinRoomError.generalError}</p>}
-          <Input placeholder="Player Name" value={joinRoomFormData.playerName} onChange={(e) => setJoinRoomFormData({ ...joinRoomFormData, playerName: e.target.value })} error={joinRoomError?.playerName} />
-          <Input placeholder="Room Pin" value={joinRoomFormData.roomPin} onChange={(e) => setJoinRoomFormData({ ...joinRoomFormData, roomPin: e.target.value })} error={joinRoomError?.roomPin} />
-          <button onClick={formValidation} className="bg-sky-500 text-white px-4 py-2 rounded-full cursor-pointer">Join Room</button>
+          <Input placeholder="Player Name" value={joinRoomFormData.playerName} onChange={(e) => setJoinRoomFormData({ ...joinRoomFormData, playerName: e.target.value.toLowerCase() })} error={joinRoomError?.playerName} />
+          <Input type="password" placeholder="Room Pin" value={joinRoomFormData.roomPin} onChange={(e) => setJoinRoomFormData({ ...joinRoomFormData, roomPin: e.target.value })} error={joinRoomError?.roomPin} />
+          <Button onClick={formValidation}>Join Room</Button>
         </div>
       </Modal>
     </Container>

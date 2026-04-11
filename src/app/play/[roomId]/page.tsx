@@ -7,6 +7,10 @@ import { useSession } from "next-auth/react";
 
 import useSocket from "@/hooks/useSocket";
 import Container from "@/components/Container";
+import CopyInput from "@/components/CopyInput";
+import Modal from "@/components/Modal";
+import Input from "@/components/Input";
+import Button from "@/components/Button";
 
 let pendingDisconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -19,15 +23,12 @@ export default function PlayPage() {
   const { roomId, roomDisplayName, resetRoom } = useRoomStore();
 
   const emitLeave = useCallback(() => {
-    console.log("emitLeave");
-    if (!socket || !isConnected) return;
-    if (!session?.user?.email || !roomId) return;
-
+    if (!socket || !isConnected || !socket.id) return;
+    if (!roomId) return;
     const payload: RoomLeavePayload = {
       roomId,
-      playerEmail: session.user.email,
+      socketId: socket.id,
     };
-
     socket.emit("room:leave", payload)
      .once("room-leave-success", (response: RoomLeaveResponse) => {
       console.log("room-leave-success", response);
@@ -37,7 +38,7 @@ export default function PlayPage() {
      .once("room-leave-not-found", (response) => {
       console.error("room-leave-not-found", response);
      });
-  }, [socket, isConnected, session, roomId, router, resetRoom]);
+  }, [socket, isConnected, roomId, router, resetRoom]);
 
   const emitKickPlayer = useCallback((targetSocketId: string, targetPlayerEmail: string) => {
     if (!socket || !socket.id || !isConnected) return;
@@ -75,27 +76,27 @@ export default function PlayPage() {
     if (!socket || !isConnected) return;
     socket.on("listen-room-leave-success", (response: RoomRejoinResponse) => {
       console.log("listen room-leave-success", response);
-      const { room } = response.data;
+      const { roomId, roomDisplayName, roomMaxPlayers, roomPlayers, createdAt, updatedAt } = response.data;
       setRoomData({
-        roomId: room.roomId,
-        roomDisplayName: room.roomDisplayName,
-        roomMaxPlayers: room.roomMaxPlayers,
-        roomPlayers: room.roomPlayers,
-        createdAt: room.createdAt,
-        updatedAt: room.updatedAt,
+        roomId,
+        roomDisplayName,
+        roomMaxPlayers,
+        roomPlayers,
+        createdAt,
+        updatedAt,
       });
     });
 
     socket.on("listen-room-host-left", (response: RoomRejoinResponse) => {
       console.log("listen room-host-left", response);
-      const { room } = response.data;
+      const { roomId, roomDisplayName, roomMaxPlayers, roomPlayers, createdAt, updatedAt } = response.data;
       setRoomData({
-        roomId: room.roomId,
-        roomDisplayName: room.roomDisplayName,
-        roomMaxPlayers: room.roomMaxPlayers,
-        roomPlayers: room.roomPlayers,
-        createdAt: room.createdAt,
-        updatedAt: room.updatedAt,
+        roomId,
+        roomDisplayName,
+        roomMaxPlayers,
+        roomPlayers,
+        createdAt,
+        updatedAt,
       });
     })
     
@@ -167,14 +168,14 @@ export default function PlayPage() {
 
     const onSuccess = (response: RoomRejoinResponse) => {
       console.log("room-rejoin-success", response);
-      const { room } = response.data;
+      const { roomId, roomDisplayName, roomMaxPlayers, roomPlayers, createdAt, updatedAt } = response.data;
       setRoomData({
-        roomId: room.roomId,
-        roomDisplayName: room.roomDisplayName,
-        roomMaxPlayers: room.roomMaxPlayers,
-        roomPlayers: room.roomPlayers,
-        createdAt: room.createdAt,
-        updatedAt: room.updatedAt,
+        roomId,
+        roomDisplayName,
+        roomMaxPlayers,
+        roomPlayers,
+        createdAt,
+        updatedAt,
       });
     };
 
@@ -186,21 +187,21 @@ export default function PlayPage() {
       .on("room-rejoin-success", onSuccess)
       .on("room-rejoin-not-found", onNotFound);
     
-  }, [roomId, router, session, socket, isConnected, socketConnect]);
+  }, [roomId, router, session, socket, isConnected, socketConnect, resetRoom]);
 
   return (
     <Container>
       PLAY PAGE
       <p>Room ID: {roomId}</p>
       <p>Room Display Name: {roomDisplayName}</p>
-      <p>invite link: {`${process.env.NEXT_PUBLIC_BASE_URL}/join/${roomId}`}</p>
-      <button onClick={emitLeave} className="text-underline cursor-pointer">Leave Room</button>
+      <CopyInput label="Invite Link" value={`${process.env.NEXT_PUBLIC_BASE_URL}/join/${roomId}`} />
+      <Button variant="danger" onClick={emitLeave}>Leave Room</Button>
       <pre>{JSON.stringify(roomData, null, 2)}</pre>
       {roomData?.roomPlayers.map((player, index) => (
         <div key={index} className="flex items-center justify-between gap-2">
           <p>{player.playerEmail}</p>
           {player.role !== "host" && player.playerEmail !== session?.user?.email && (
-            <button onClick={() => emitKickPlayer(player.socketId, player.playerEmail)} className="text-underline cursor-pointer">Kick Player</button>
+            <Button variant="danger" onClick={() => emitKickPlayer(player.socketId, player.playerEmail)}>Kick Player</Button>
           )}
         </div>
       ))}

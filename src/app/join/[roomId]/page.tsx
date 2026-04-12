@@ -14,7 +14,6 @@ import Button from "@/components/Button";
 
 interface JoinRoomFormData {
   playerName: string;
-  roomPin: string;
 }
 
 interface JoinRoomError {
@@ -32,7 +31,6 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
   const [joinRoomModalOpen, setJoinRoomModalOpen] = useState(false);
   const [joinRoomFormData, setJoinRoomFormData] = useState<JoinRoomFormData>({
     playerName: "",
-    roomPin: "",
   });
   const [joinRoomError, setJoinRoomError] = useState<JoinRoomError | null>(null);
   const { data: session } = useSession();
@@ -71,12 +69,11 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
     if (!isConnected) {
       socketConnect();
     }
-    const { playerName, roomPin } = joinRoomFormData;
+    const { playerName } = joinRoomFormData;
     const payload: RoomJoinPayload = {
       roomId: roomId,
       playerName: playerName,
       playerEmail: session.user.email,
-      roomPin: roomPin,
     }
     socket?.emit("room:join", payload)
       .on("room-join-failed", (response: RoomJoinResponse) => {
@@ -86,10 +83,10 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
             setJoinRoomError({ ...joinRoomError, generalError: "Room not found" });
             break;
           case "Room is full!":
-            setJoinRoomError({ ...joinRoomError, generalError: "Player not found" });
+            setJoinRoomError({ ...joinRoomError, generalError: "Room is full!" });
             break;
-          case "Invalid room pin!":
-            setJoinRoomError({ ...joinRoomError, roomPin: "Invalid room pin!" });
+          case "Player already in another room!":
+            setJoinRoomError({ ...joinRoomError, generalError: "Player already in another room!" });
             break;
           default:
             setJoinRoomError({ ...joinRoomError, generalError: "An error occurred while joining the room" });
@@ -97,31 +94,32 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
         }
       })
       .on("room-join-success", (response: RoomJoinResponse) => {
-        const { roomId, roomDisplayName } = response.data;
-        setRoom({ roomId, roomDisplayName } as RoomState);
+        const { data } = response;
+        setRoom({
+          roomId: data.roomId,
+          roomMaxPlayers: data.roomMaxPlayers,
+          roomPlayers: data.roomPlayers,
+          gameRule: data.gameRule,
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
+        } as RoomState);
         setJoinRoomFormData({
           playerName: "",
-          roomPin: "",
         });
         setJoinRoomModalOpen(false);
         leftAfterJoinSuccessRef.current = true;
         router.push(`/play/${roomId}`);
       });
-  }, [session, isConnected, joinRoomFormData, joinRoomError, roomId, socket, socketConnect, setRoom, router]);
+  }, [session, isConnected, joinRoomFormData, joinRoomError, roomId, socket, socketConnect, router, setRoom]);
   
   const formValidation = useCallback(() => {
     setJoinRoomError(null);
     const errors: JoinRoomError = {};
-    const { playerName, roomPin } = joinRoomFormData;
+    const { playerName } = joinRoomFormData;
     if (!playerName || playerName.trim() === "") {
       errors.playerName = "Player name is required";
     } else if (playerName.length < 3) {
       errors.playerName = "Player name must be at least 3 characters long";
-    }
-    if (!roomPin || roomPin.trim() === "") {
-      errors.roomPin = "Room pin is required";
-    } else if (roomPin.length !== 4) {
-      errors.roomPin = "Invalid room pin!";
     }
     setJoinRoomError(errors);
     if (Object.keys(errors).length > 0) return;
@@ -155,7 +153,6 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
           <h2 className="text-2xl font-bold">Join Room</h2>
           {joinRoomError?.generalError && <p className="text-red-500">{joinRoomError.generalError}</p>}
           <Input placeholder="Player Name" value={joinRoomFormData.playerName} onChange={(e) => setJoinRoomFormData({ ...joinRoomFormData, playerName: e.target.value.toLowerCase() })} error={joinRoomError?.playerName} />
-          <Input type="password" placeholder="Room Pin" value={joinRoomFormData.roomPin} onChange={(e) => setJoinRoomFormData({ ...joinRoomFormData, roomPin: e.target.value })} error={joinRoomError?.roomPin} />
           <Button onClick={formValidation}>Join Room</Button>
         </div>
       </Modal>

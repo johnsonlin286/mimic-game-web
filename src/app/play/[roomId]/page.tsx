@@ -20,7 +20,18 @@ export default function PlayPage() {
   const [roomData, setRoomData] = useState<RoomInfo | null>(null);
   const { socket, isConnected, socketConnect, socketDisconnect } = useSocket();
   const { data: session } = useSession();
-  const { roomId, roomDisplayName, resetRoom } = useRoomStore();
+  const { roomId, roomMaxPlayers, roomPlayers, gameRule, createdAt, updatedAt, resetRoom } = useRoomStore();
+
+  useEffect(() => {
+    setRoomData({
+      roomId,
+      roomMaxPlayers,
+      roomPlayers,
+      gameRule,
+      createdAt,
+      updatedAt,
+    });
+  }, [roomId, roomMaxPlayers, roomPlayers, gameRule, createdAt, updatedAt]);
 
   const emitLeave = useCallback(() => {
     if (!socket || !isConnected || !socket.id) return;
@@ -56,9 +67,9 @@ export default function PlayPage() {
         const { room } = response.data;
         setRoomData({
           roomId: room.roomId,
-          roomDisplayName: room.roomDisplayName,
           roomMaxPlayers: room.roomMaxPlayers,
           roomPlayers: room.roomPlayers,
+          gameRule: room.gameRule,
           createdAt: room.createdAt,
           updatedAt: room.updatedAt,
         });
@@ -74,14 +85,27 @@ export default function PlayPage() {
 
   useEffect(() => {
     if (!socket || !isConnected) return;
-    socket.on("listen-room-leave-success", (response: RoomRejoinResponse) => {
-      console.log("listen room-leave-success", response);
-      const { roomId, roomDisplayName, roomMaxPlayers, roomPlayers, createdAt, updatedAt } = response.data;
+    socket.on("listen-room-join-success", (response: RoomJoinResponse) => {
+      console.log("listen room-join-success", response);
+      const { roomId, roomMaxPlayers, roomPlayers, gameRule, createdAt, updatedAt } = response.data;
       setRoomData({
         roomId,
-        roomDisplayName,
         roomMaxPlayers,
         roomPlayers,
+        gameRule,
+        createdAt,
+        updatedAt,
+      });
+    });
+    
+    socket.on("listen-room-leave-success", (response: RoomRejoinResponse) => {
+      console.log("listen room-leave-success", response);
+      const { roomId, roomMaxPlayers, roomPlayers, gameRule, createdAt, updatedAt } = response.data;
+      setRoomData({
+        roomId,
+        roomMaxPlayers,
+        roomPlayers,
+        gameRule,
         createdAt,
         updatedAt,
       });
@@ -89,12 +113,12 @@ export default function PlayPage() {
 
     socket.on("listen-room-host-left", (response: RoomRejoinResponse) => {
       console.log("listen room-host-left", response);
-      const { roomId, roomDisplayName, roomMaxPlayers, roomPlayers, createdAt, updatedAt } = response.data;
+      const { roomId, roomMaxPlayers, roomPlayers, gameRule, createdAt, updatedAt } = response.data;
       setRoomData({
         roomId,
-        roomDisplayName,
         roomMaxPlayers,
         roomPlayers,
+        gameRule,
         createdAt,
         updatedAt,
       });
@@ -111,9 +135,9 @@ export default function PlayPage() {
       const { room } = response.data;
       setRoomData({
         roomId: room.roomId,
-        roomDisplayName: room.roomDisplayName,
         roomMaxPlayers: room.roomMaxPlayers,
         roomPlayers: room.roomPlayers,
+        gameRule: room.gameRule,
         createdAt: room.createdAt,
         updatedAt: room.updatedAt,
       });
@@ -168,12 +192,12 @@ export default function PlayPage() {
 
     const onSuccess = (response: RoomRejoinResponse) => {
       console.log("room-rejoin-success", response);
-      const { roomId, roomDisplayName, roomMaxPlayers, roomPlayers, createdAt, updatedAt } = response.data;
+      const { roomId, roomMaxPlayers, roomPlayers, gameRule, createdAt, updatedAt } = response.data;
       setRoomData({
         roomId,
-        roomDisplayName,
         roomMaxPlayers,
         roomPlayers,
+        gameRule,
         createdAt,
         updatedAt,
       });
@@ -193,7 +217,6 @@ export default function PlayPage() {
     <Container>
       PLAY PAGE
       <p>Room ID: {roomId}</p>
-      <p>Room Display Name: {roomDisplayName}</p>
       <CopyInput label="Invite Link" value={`${process.env.NEXT_PUBLIC_BASE_URL}/join/${roomId}`} />
       <Button variant="danger" onClick={emitLeave}>Leave Room</Button>
       <pre>{JSON.stringify(roomData, null, 2)}</pre>

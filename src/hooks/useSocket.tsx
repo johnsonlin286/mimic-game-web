@@ -40,7 +40,6 @@ export default function useSocket() {
   useEffect(() => {
     if (!session) {
       getSocket().disconnect();
-      router.push("/");
     }
   }, [session, router]);
 

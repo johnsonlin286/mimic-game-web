@@ -1,17 +1,25 @@
 interface RoomCreatePayload {
   playerName: string;
   creatorEmail: string;
-  roomName: string;
   roomMaxPlayers: number;
-  roomPin: string;
+}
+
+interface GameRule {
+  roles: {
+    mimic: boolean;
+    void: boolean;
+  }
+  category: string;
+  language: string;
+  status: "waiting" | "ready" | "playing" | "finished";
 }
 
 interface RoomResponseData {
   creatorEmail: string;
-  roomDisplayName: string;
   roomId: string;
   roomMaxPlayers: number;
   roomPlayers: RoomPlayerData[];
+  gameRule: GameRule;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -26,7 +34,6 @@ interface RoomJoinPayload {
   roomId: string;
   playerEmail: string;
   playerName: string;
-  roomPin: string;
 }
 
 interface RoomJoinResponse {
@@ -85,9 +92,14 @@ interface RoomHostLeftResponse {
 }
 
 interface RoomState {
+  creatorEmail: string;
   roomId: string;
-  roomDisplayName: string;
-  setRoom: (room: RoomState) => void;
+  roomMaxPlayers: number;
+  roomPlayers: RoomPlayerData[];
+  gameRule: GameRule;
+  createdAt: Date;
+  updatedAt: Date;
+  setRoom: (room: RoomResponseData) => void;
   resetRoom: () => void;
 }
 
@@ -104,20 +116,19 @@ interface RoomPlayerData {
 
 interface RoomData {
   creatorEmail: string;
-  roomDisplayName: string;
   roomId: string;
   roomMaxPlayers: number;
-  roomPin: string;
   roomPlayers: RoomPlayerData[];
+  gameRule: GameRule;
   createdAt: Date;
   updatedAt: Date;
 }
 
 interface RoomInfo {
   roomId: string;
-  roomDisplayName: string;
   roomMaxPlayers: number;
   roomPlayers: RoomPlayerData[];
+  gameRule: GameRule;
   createdAt: Date;
   updatedAt: Date;
 }

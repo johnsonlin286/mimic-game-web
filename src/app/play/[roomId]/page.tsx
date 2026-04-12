@@ -3,16 +3,17 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Crown } from "lucide-react";
+import { Crown, Wrench } from "lucide-react";
 
 import { useRoomStore } from "@/store/room-state";
-import useSocket from "@/hooks/useSocket";
+import useSocket, { getSocket } from "@/hooks/useSocket";
 import Panel from "@/components/Panel";
 import LabelPill from "@/components/LabelPill";
 import Container from "@/components/Container";
 import CopyInput from "@/components/CopyInput";
+import SwitchInput from "@/components/SwitchInput";
+import SelectInput from "@/components/SelectInput";
 import Modal from "@/components/Modal";
-import Input from "@/components/Input";
 import Button from "@/components/Button";
 
 let pendingDisconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -22,8 +23,16 @@ export default function PlayPage() {
   const router = useRouter();
   const [roomData, setRoomData] = useState<RoomInfo | null>(null);
   const [gameSetupModal, setGameSetupModal] = useState(false);
+  const [gameSetupData, setGameSetupData] = useState<Partial<GameRule>>({
+    roles: {
+      mimic: true,
+      void: false,
+    },
+    category: "",
+    language: "en",
+  });
   const [isHost, setIsHost] = useState(false);
-  const { socket, isConnected, socketConnect, socketDisconnect } = useSocket();
+  const { socket, isConnected, socketConnect } = useSocket();
   const { data: session } = useSession();
   const { roomId, roomMaxPlayers, roomPlayers, gameRule, isPublic, createdAt, updatedAt, resetRoom } = useRoomStore();
 
@@ -37,6 +46,9 @@ export default function PlayPage() {
       createdAt,
       updatedAt,
     });
+    setGameSetupData({
+      ...gameRule,
+    });
   }, [roomId, roomMaxPlayers, roomPlayers, gameRule, isPublic, createdAt, updatedAt]);
 
   useEffect(() => {
@@ -46,13 +58,14 @@ export default function PlayPage() {
   }, [roomPlayers, session]);
 
   const emitLeave = useCallback(() => {
-    if (!socket || !isConnected || !socket.id) return;
-    if (!roomId) return;
+    const sock = getSocket();
+    const currentRoomId = useRoomStore.getState().roomId;
+    if (!sock.connected || !sock.id || !currentRoomId) return;
     const payload: RoomLeavePayload = {
-      roomId,
-      socketId: socket.id,
+      roomId: currentRoomId,
+      socketId: sock.id,
     };
-    socket.emit("room:leave", payload)
+    sock.emit("room:leave", payload)
       .once("room-leave-success", (response: RoomLeaveResponse) => {
         console.log("room-leave-success", response);
         resetRoom();
@@ -61,7 +74,7 @@ export default function PlayPage() {
       .once("room-leave-not-found", (response) => {
         console.error("room-leave-not-found", response);
       });
-  }, [socket, isConnected, roomId, router, resetRoom]);
+  }, [router, resetRoom]);
 
   const emitKickPlayer = useCallback((targetSocketId: string, targetPlayerEmail: string) => {
     if (!socket || !socket.id || !isConnected) return;
@@ -111,19 +124,19 @@ export default function PlayPage() {
     socket.on("listen-room-host-left", (response: RoomRejoinResponse) => {
       console.log("listen room-host-left", response);
       setRoomData(response.data);
-    })
+    });
 
     socket.on("listen-room-kicked-player", (response) => {
       console.log("listen room-kicked-player", response);
       resetRoom();
       router.push("/");
-    })
+    });
 
     socket.on("listen-room-kick-player", (response: RoomKickPlayerResponse) => {
       console.log("listen room-kick-player", response);
       const { room } = response.data;
       setRoomData(room);
-    })
+    });
   }, [socket, isConnected, router, isPublic, resetRoom]);
 
   useEffect(() => {
@@ -133,22 +146,23 @@ export default function PlayPage() {
     }
 
     return () => {
-      // Delay slightly so Strict Mode dev remount can cancel this.
       pendingDisconnectTimer = setTimeout(() => {
-        resetRoom()
-        emitLeave();
-        socketDisconnect();
+        const sock = getSocket();
+        const currentRoomId = useRoomStore.getState().roomId;
+        if (sock.connected && sock.id && currentRoomId) {
+          sock.emit("room:leave", { roomId: currentRoomId, socketId: sock.id });
+        }
+        resetRoom();
+        sock.disconnect();
       }, 100);
     };
-  }, [resetRoom, emitLeave, socketDisconnect]);
+  }, [resetRoom]);
 
   useEffect(() => {
     if (!session || !roomId || !socket) return;
 
-    // Ensure we only attempt a rejoin once per mount/roomId.
     if (hasRejoinedRef.current) return;
 
-    // If we’re not connected yet, connect first and let this effect re-run.
     if (!isConnected) {
       socketConnect();
       return;
@@ -184,7 +198,6 @@ export default function PlayPage() {
     })
       .on("room-rejoin-success", onSuccess)
       .on("room-rejoin-not-found", onNotFound);
-
   }, [roomId, router, session, socket, isConnected, isPublic, socketConnect, resetRoom]);
 
   return (
@@ -206,6 +219,64 @@ export default function PlayPage() {
           <CopyInput label="Invite Link" value={`${process.env.NEXT_PUBLIC_BASE_URL}/join/${roomId}`} />
         )}
       </Panel>
+      <Panel collapsible title="Game Setup" className="flex flex-col">
+        {gameRule && (
+          <div className="flex justify-between items-start gap-4">
+            <div className="flex flex-col">
+              <p className={`flex items-center gap-2 ${gameRule.roles.mimic ? "opacity-100" : "opacity-30"}`}>
+                <strong>
+                  The Mimic:
+                </strong>
+                <strong>
+                  {(() => {
+                    const n = roomData?.roomPlayers?.length ?? 0;
+                    if (n >= 9) return "3";
+                    if (n >= 7) return "2";
+                    return "1";
+                  })()}
+                </strong>
+              </p>
+              <p className={`flex items-center gap-2 ${gameRule.roles.void ? "opacity-100" : "opacity-20"}`}>
+                <strong>
+                  The Void:
+                </strong>
+                <strong>
+                  {(() => {
+                    const n = roomData?.roomPlayers?.length ?? 0;
+                    if (n >= 5) return "1";
+                    if (n >= 11) return "2";
+                    return "0";
+                  })()}
+                </strong>
+              </p>
+              <p className="flex items-center gap-2">
+                <strong>
+                  Language:
+                </strong>
+                <strong>
+                  {gameRule.language}
+                </strong>
+              </p>
+              <p className="flex items-center gap-2">
+                <strong>
+                  Category:
+                </strong>
+                <strong>
+                  {gameRule.category}
+                </strong>
+              </p>
+            </div>
+            <div>
+              {isHost && (
+                <Button variant="secondary" size="sm" onClick={() => setGameSetupModal(true)} className="flex items-center justify-center gap-2">
+                  <Wrench className="w-4 h-4" />
+                  Edit
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+      </Panel>
       <Panel collapsible title="Players">
         <ul className="flex flex-col gap-2">
           {roomData?.roomPlayers.map((player, index) => (
@@ -222,7 +293,37 @@ export default function PlayPage() {
         </ul>
       </Panel>
       <Modal isOpen={gameSetupModal} onClose={() => setGameSetupModal(false)}>
-        <></>
+        <div className="flex flex-col gap-4">
+          <h2 className="text-2xl font-bold">Game Setup</h2>
+          <div className="flex flex-col gap-1">
+            <SwitchInput label="The Mimic" checked={roomData?.gameRule.roles.mimic || false} disabled onCheckedChange={() => null} />
+            <small className="text-zinc-500">The Mimic is who get different word than other players.</small>
+            <SwitchInput label="The Void" checked={roomData?.gameRule.roles.void || false} disabled={roomData?.roomPlayers?.length && roomData?.roomPlayers?.length < 5 ? true : false} onCheckedChange={() => null} />
+            <small className="text-zinc-500">The Void is who not get any word.</small>
+          </div>
+          <SelectInput label="Language" options={["English", "Indonesian"]} value={roomData?.gameRule.language || "English"} onChange={() => null} />
+          <h3 className="text-lg font-bold">Categories</h3>
+          <div className="flex gap-2 w-full max-w-full overflow-auto pb-3">
+            <div role="button" className="shrink-0 flex justify-center items-center w-3/12 bg-zinc-200 rounded-lg text-center p-4">
+              Category 1
+            </div>
+            <div role="button" className="shrink-0 flex justify-center items-center w-3/12 bg-zinc-200 rounded-lg text-center p-4">
+              Category 2
+            </div>
+            <div role="button" className="shrink-0 flex justify-center items-center w-3/12 bg-zinc-200 rounded-lg text-center p-4">
+              Category 3
+            </div>
+            <div role="button" className="shrink-0 flex justify-center items-center w-3/12 bg-zinc-200 rounded-lg text-center p-4">
+              Category 4
+            </div>
+            <div role="button" className="shrink-0 flex justify-center items-center w-3/12 bg-zinc-200 rounded-lg text-center p-4">
+              Category 5
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 w-full">
+            <Button variant="primary" size="sm" onClick={() => setGameSetupModal(false)} className="w-full max-w-40">Save</Button>
+          </div>
+        </div>
       </Modal>
       <pre>{JSON.stringify(roomData, null, 2)}</pre>
     </Container>

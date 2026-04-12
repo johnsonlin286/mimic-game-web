@@ -2,10 +2,13 @@
 
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useRoomStore } from "@/store/room-state";
 import { useSession } from "next-auth/react";
+import { Crown } from "lucide-react";
 
+import { useRoomStore } from "@/store/room-state";
 import useSocket from "@/hooks/useSocket";
+import Panel from "@/components/Panel";
+import LabelPill from "@/components/LabelPill";
 import Container from "@/components/Container";
 import CopyInput from "@/components/CopyInput";
 import Modal from "@/components/Modal";
@@ -18,9 +21,11 @@ export default function PlayPage() {
   const hasRejoinedRef = useRef(false);
   const router = useRouter();
   const [roomData, setRoomData] = useState<RoomInfo | null>(null);
+  const [gameSetupModal, setGameSetupModal] = useState(false);
+  const [isHost, setIsHost] = useState(false);
   const { socket, isConnected, socketConnect, socketDisconnect } = useSocket();
   const { data: session } = useSession();
-  const { roomId, roomMaxPlayers, roomPlayers, gameRule, createdAt, updatedAt, resetRoom } = useRoomStore();
+  const { roomId, roomMaxPlayers, roomPlayers, gameRule, isPublic, createdAt, updatedAt, resetRoom } = useRoomStore();
 
   useEffect(() => {
     setRoomData({
@@ -28,10 +33,17 @@ export default function PlayPage() {
       roomMaxPlayers,
       roomPlayers,
       gameRule,
+      isPublic,
       createdAt,
       updatedAt,
     });
-  }, [roomId, roomMaxPlayers, roomPlayers, gameRule, createdAt, updatedAt]);
+  }, [roomId, roomMaxPlayers, roomPlayers, gameRule, isPublic, createdAt, updatedAt]);
+
+  useEffect(() => {
+    if (!session) return;
+    const host = roomPlayers.find((player) => player.playerEmail === session?.user?.email)?.role === "host";
+    setIsHost(host || false);
+  }, [roomPlayers, session]);
 
   const emitLeave = useCallback(() => {
     if (!socket || !isConnected || !socket.id) return;
@@ -41,14 +53,14 @@ export default function PlayPage() {
       socketId: socket.id,
     };
     socket.emit("room:leave", payload)
-     .once("room-leave-success", (response: RoomLeaveResponse) => {
-      console.log("room-leave-success", response);
-      resetRoom();
-      router.push("/");
-     })
-     .once("room-leave-not-found", (response) => {
-      console.error("room-leave-not-found", response);
-     });
+      .once("room-leave-success", (response: RoomLeaveResponse) => {
+        console.log("room-leave-success", response);
+        resetRoom();
+        router.push("/");
+      })
+      .once("room-leave-not-found", (response) => {
+        console.error("room-leave-not-found", response);
+      });
   }, [socket, isConnected, roomId, router, resetRoom]);
 
   const emitKickPlayer = useCallback((targetSocketId: string, targetPlayerEmail: string) => {
@@ -70,6 +82,7 @@ export default function PlayPage() {
           roomMaxPlayers: room.roomMaxPlayers,
           roomPlayers: room.roomPlayers,
           gameRule: room.gameRule,
+          isPublic: room.isPublic,
           createdAt: room.createdAt,
           updatedAt: room.updatedAt,
         });
@@ -87,43 +100,19 @@ export default function PlayPage() {
     if (!socket || !isConnected) return;
     socket.on("listen-room-join-success", (response: RoomJoinResponse) => {
       console.log("listen room-join-success", response);
-      const { roomId, roomMaxPlayers, roomPlayers, gameRule, createdAt, updatedAt } = response.data;
-      setRoomData({
-        roomId,
-        roomMaxPlayers,
-        roomPlayers,
-        gameRule,
-        createdAt,
-        updatedAt,
-      });
+      setRoomData(response.data);
     });
-    
+
     socket.on("listen-room-leave-success", (response: RoomRejoinResponse) => {
       console.log("listen room-leave-success", response);
-      const { roomId, roomMaxPlayers, roomPlayers, gameRule, createdAt, updatedAt } = response.data;
-      setRoomData({
-        roomId,
-        roomMaxPlayers,
-        roomPlayers,
-        gameRule,
-        createdAt,
-        updatedAt,
-      });
+      setRoomData(response.data);
     });
 
     socket.on("listen-room-host-left", (response: RoomRejoinResponse) => {
       console.log("listen room-host-left", response);
-      const { roomId, roomMaxPlayers, roomPlayers, gameRule, createdAt, updatedAt } = response.data;
-      setRoomData({
-        roomId,
-        roomMaxPlayers,
-        roomPlayers,
-        gameRule,
-        createdAt,
-        updatedAt,
-      });
+      setRoomData(response.data);
     })
-    
+
     socket.on("listen-room-kicked-player", (response) => {
       console.log("listen room-kicked-player", response);
       resetRoom();
@@ -133,16 +122,9 @@ export default function PlayPage() {
     socket.on("listen-room-kick-player", (response: RoomKickPlayerResponse) => {
       console.log("listen room-kick-player", response);
       const { room } = response.data;
-      setRoomData({
-        roomId: room.roomId,
-        roomMaxPlayers: room.roomMaxPlayers,
-        roomPlayers: room.roomPlayers,
-        gameRule: room.gameRule,
-        createdAt: room.createdAt,
-        updatedAt: room.updatedAt,
-      });
+      setRoomData(room);
     })
-  }, [socket, isConnected, router, resetRoom]);
+  }, [socket, isConnected, router, isPublic, resetRoom]);
 
   useEffect(() => {
     if (pendingDisconnectTimer) {
@@ -192,15 +174,7 @@ export default function PlayPage() {
 
     const onSuccess = (response: RoomRejoinResponse) => {
       console.log("room-rejoin-success", response);
-      const { roomId, roomMaxPlayers, roomPlayers, gameRule, createdAt, updatedAt } = response.data;
-      setRoomData({
-        roomId,
-        roomMaxPlayers,
-        roomPlayers,
-        gameRule,
-        createdAt,
-        updatedAt,
-      });
+      setRoomData(response.data);
     };
 
     socket.emit("room:rejoin", {
@@ -210,24 +184,47 @@ export default function PlayPage() {
     })
       .on("room-rejoin-success", onSuccess)
       .on("room-rejoin-not-found", onNotFound);
-    
-  }, [roomId, router, session, socket, isConnected, socketConnect, resetRoom]);
+
+  }, [roomId, router, session, socket, isConnected, isPublic, socketConnect, resetRoom]);
 
   return (
-    <Container>
-      PLAY PAGE
-      <p>Room ID: {roomId}</p>
-      <CopyInput label="Invite Link" value={`${process.env.NEXT_PUBLIC_BASE_URL}/join/${roomId}`} />
-      <Button variant="danger" onClick={emitLeave}>Leave Room</Button>
-      <pre>{JSON.stringify(roomData, null, 2)}</pre>
-      {roomData?.roomPlayers.map((player, index) => (
-        <div key={index} className="flex items-center justify-between gap-2">
-          <p>{player.playerEmail}</p>
-          {player.role !== "host" && player.playerEmail !== session?.user?.email && (
-            <Button variant="danger" onClick={() => emitKickPlayer(player.socketId, player.playerEmail)}>Kick Player</Button>
-          )}
+    <Container className="py-4">
+      <Panel collapsible title="Room Information" className="flex flex-col">
+        <div className="flex justify-between items-start">
+          <div className="flex flex-col gap-0.5">
+            <p className="text-sm text-zinc-500">
+              <strong className="font-bold">Room ID:</strong> {roomId}
+            </p>
+            <p className="text-sm text-zinc-500">
+              <strong className="font-bold">Players:</strong> {roomPlayers.length} / {roomMaxPlayers}
+              <LabelPill variant={roomData?.gameRule.status === "waiting" ? "warning" : roomData?.gameRule.status === "ready" ? "success" : roomData?.gameRule.status === "playing" ? "success" : "neutral"} className="ml-2" />
+            </p>
+          </div>
+          <Button variant="danger" onClick={emitLeave}>Leave Room</Button>
         </div>
-      ))}
+        {isHost && (
+          <CopyInput label="Invite Link" value={`${process.env.NEXT_PUBLIC_BASE_URL}/join/${roomId}`} />
+        )}
+      </Panel>
+      <Panel collapsible title="Players">
+        <ul className="flex flex-col gap-2">
+          {roomData?.roomPlayers.map((player, index) => (
+            <li key={index} className="flex items-center justify-between gap-2 not-last:border-b border-zinc-200 pb-2">
+              <strong className="font-bold flex items-center gap-2">
+                {player.playerName}
+                {isHost && <Crown />}
+              </strong>
+              {isHost && player.playerEmail !== session?.user?.email && (
+                <Button size="sm" variant="danger" onClick={() => emitKickPlayer(player.socketId, player.playerEmail)}>Kick Player</Button>
+              )}
+            </li>
+          ))}
+        </ul>
+      </Panel>
+      <Modal isOpen={gameSetupModal} onClose={() => setGameSetupModal(false)}>
+        <></>
+      </Modal>
+      <pre>{JSON.stringify(roomData, null, 2)}</pre>
     </Container>
   );
 }

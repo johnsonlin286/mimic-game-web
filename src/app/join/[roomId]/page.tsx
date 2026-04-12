@@ -100,6 +100,7 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
           roomMaxPlayers: data.roomMaxPlayers,
           roomPlayers: data.roomPlayers,
           gameRule: data.gameRule,
+          isPublic: data.isPublic,
           createdAt: data.createdAt,
           updatedAt: data.updatedAt,
         } as RoomState);

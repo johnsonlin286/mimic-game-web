@@ -12,11 +12,13 @@ import useSocket from "@/hooks/useSocket";
 import Container from "@/components/Container";
 import Modal from "@/components/Modal";
 import Input from "@/components/Input";
+import SwitchInput from "@/components/SwitchInput";
 import Button from "@/components/Button";
 
 interface CreateRoomFormData {
   playerName: string;
   roomMaxPlayers: number;
+  isPublic: boolean;
 }
 
 interface CreateRoomError {
@@ -31,6 +33,7 @@ export default function Home() {
   const [createRoomFormData, setCreateRoomFormData] = useState<CreateRoomFormData>({
     playerName: "",
     roomMaxPlayers: 3,
+    isPublic: true,
   });
   const [createRoomError, setCreateRoomError] = useState<CreateRoomError | null>(null);
   const { data: session } = useSession();
@@ -61,12 +64,13 @@ export default function Home() {
     if (!isConnected) {
       socketConnect();
     }
-    const { playerName, roomMaxPlayers } = createRoomFormData;
+    const { playerName, roomMaxPlayers, isPublic } = createRoomFormData;
     setCreateRoomError(null);
     const payload: RoomCreatePayload = {
       playerName: playerName,
       creatorEmail: session.user.email,
       roomMaxPlayers: roomMaxPlayers,
+      isPublic: isPublic,
     }
     socket?.emit("room:create", payload)
       .on("room-created", (response: RoomCreateResponse) => {
@@ -77,12 +81,14 @@ export default function Home() {
           roomMaxPlayers: data.roomMaxPlayers,
           roomPlayers: data.roomPlayers,
           gameRule: data.gameRule,
+          isPublic: data.isPublic,
           createdAt: data.createdAt,
           updatedAt: data.updatedAt,
         } as RoomState);
         setCreateRoomFormData({
           playerName: "",
           roomMaxPlayers: 3,
+          isPublic: true,
         });
         setCreateRoomModalOpen(false);
         router.push(`/play/${data.roomId}`);
@@ -135,15 +141,16 @@ export default function Home() {
         <div key={index} className="flex items-center justify-between gap-2">
           <p>{`creator: ${room.creatorEmail}`}</p>
           <p>{`max players: ${room.roomPlayers.length} / ${room.roomMaxPlayers}`}</p>
-          <Button variant="secondary" onClick={() => router.push(`/join/${room.roomId}`)}>Join Room</Button>
+          {room.isPublic && <Button variant="secondary" onClick={() => router.push(`/join/${room.roomId}`)}>Join Room</Button>}
         </div>
       ))}
       <Modal isOpen={createRoomModalOpen} onClose={() => setCreateRoomModalOpen(false)}>
         <div className="flex flex-col gap-4">
           <h2 className="text-2xl font-bold">Create Room</h2>
           {createRoomError?.generalError && <p className="text-red-500">{createRoomError.generalError}</p>}
-          <Input type="text" placeholder="Player Name" value={createRoomFormData.playerName} onChange={(e) => setCreateRoomFormData({ ...createRoomFormData, playerName: e.target.value.toLowerCase() })} error={createRoomError?.playerName} />
-          <Input type="number" placeholder="Room Max Players" min={3} max={10} value={createRoomFormData.roomMaxPlayers} onChange={(e) => setCreateRoomFormData({ ...createRoomFormData, roomMaxPlayers: parseInt(e.target.value) > 0 ? parseInt(e.target.value) : 3 })} error={createRoomError?.roomMaxPlayers} />
+          <Input type="text" label="Player Name" placeholder="Player Name" value={createRoomFormData.playerName} onChange={(e) => setCreateRoomFormData({ ...createRoomFormData, playerName: e.target.value.toLowerCase() })} error={createRoomError?.playerName} />
+          <Input type="number" label="Max Players" placeholder="Max Players" min={3} max={10} value={createRoomFormData.roomMaxPlayers} onChange={(e) => setCreateRoomFormData({ ...createRoomFormData, roomMaxPlayers: parseInt(e.target.value) > 0 ? parseInt(e.target.value) : 3 })} error={createRoomError?.roomMaxPlayers} />
+          <SwitchInput label="Public" checked={createRoomFormData.isPublic} onCheckedChange={(checked) => setCreateRoomFormData({ ...createRoomFormData, isPublic: checked })} className="w-fit" />
           <Button onClick={formValidation}>Create Room</Button>
         </div>
       </Modal>

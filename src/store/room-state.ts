@@ -17,6 +17,7 @@ export const useRoomStore = create<RoomState>()(
         language: "en",
         status: "waiting",
       },
+      isPublic: true,
       createdAt: new Date(),
       updatedAt: new Date(),
       setRoom: (room: RoomResponseData) => set(() => ({
@@ -25,6 +26,7 @@ export const useRoomStore = create<RoomState>()(
         roomMaxPlayers: room.roomMaxPlayers,
         roomPlayers: room.roomPlayers,
         gameRule: room.gameRule,
+        isPublic: room.isPublic,
         createdAt: room.createdAt,
         updatedAt: room.updatedAt,
       })),

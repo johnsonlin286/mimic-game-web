@@ -2,6 +2,7 @@ interface RoomCreatePayload {
   playerName: string;
   creatorEmail: string;
   roomMaxPlayers: number;
+  isPublic: boolean;
 }
 
 interface GameRule {
@@ -20,6 +21,7 @@ interface RoomResponseData {
   roomMaxPlayers: number;
   roomPlayers: RoomPlayerData[];
   gameRule: GameRule;
+  isPublic: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -97,6 +99,7 @@ interface RoomState {
   roomMaxPlayers: number;
   roomPlayers: RoomPlayerData[];
   gameRule: GameRule;
+  isPublic: boolean;
   createdAt: Date;
   updatedAt: Date;
   setRoom: (room: RoomResponseData) => void;
@@ -111,6 +114,7 @@ interface AllRoomsResponse {
 interface RoomPlayerData {
   socketId: string;
   playerEmail: string;
+  playerName: string;
   role: string;
 }
 
@@ -129,6 +133,7 @@ interface RoomInfo {
   roomMaxPlayers: number;
   roomPlayers: RoomPlayerData[];
   gameRule: GameRule;
+  isPublic: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

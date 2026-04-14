@@ -12,7 +12,8 @@ import LabelPill from "@/components/LabelPill";
 import Container from "@/components/Container";
 import CopyInput from "@/components/CopyInput";
 import SwitchInput from "@/components/SwitchInput";
-import SelectInput from "@/components/SelectInput";
+import SelectLanguages from "@/components/SelectLanguages";
+import CategoriesOption from "@/components/CategoriesOption";
 import Modal from "@/components/Modal";
 import Button from "@/components/Button";
 
@@ -24,6 +25,14 @@ export default function PlayPage() {
   const [roomData, setRoomData] = useState<RoomInfo | null>(null);
   const [gameSetupModal, setGameSetupModal] = useState(false);
   const [gameSetupData, setGameSetupData] = useState<Partial<GameRule>>({
+    roles: {
+      mimic: true,
+      void: false,
+    },
+    category: "",
+    language: "en",
+  });
+  const [setupFormData, setSetupFormData] = useState<Partial<GameRule>>({
     roles: {
       mimic: true,
       void: false,
@@ -47,6 +56,9 @@ export default function PlayPage() {
       updatedAt,
     });
     setGameSetupData({
+      ...gameRule,
+    });
+    setSetupFormData({
       ...gameRule,
     });
   }, [roomId, roomMaxPlayers, roomPlayers, gameRule, isPublic, createdAt, updatedAt]);
@@ -200,6 +212,51 @@ export default function PlayPage() {
       .on("room-rejoin-not-found", onNotFound);
   }, [roomId, router, session, socket, isConnected, isPublic, socketConnect, resetRoom]);
 
+  const handleSetupFormChange = (key: keyof Partial<GameRule>, value: unknown) => {
+    switch (key) {
+      case "roles":
+        setSetupFormData((prev) => ({
+          ...prev,
+          roles: {
+            mimic: (value as { mimic: boolean }).mimic,
+            void: (value as { void: boolean }).void,
+          },
+        }));
+        break;
+      case "language":
+        setSetupFormData((prev) => ({
+          ...prev,
+          language: value as string,
+        }));
+        break;
+      case "category":
+        setSetupFormData((prev) => ({
+          ...prev,
+          category: value as string,
+        }));
+        break;
+      default:
+    }
+  };
+
+  const handleSaveGameSetup = () => {
+    setGameSetupData({
+      ...setupFormData,
+    });
+    // update room data
+    setRoomData((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        gameRule: {
+          ...prev.gameRule,
+          ...setupFormData,
+        },
+      };
+    });
+    setGameSetupModal(false);
+  }
+
   return (
     <Container className="py-4">
       <Panel collapsible title="Room Information" className="flex flex-col">
@@ -220,10 +277,10 @@ export default function PlayPage() {
         )}
       </Panel>
       <Panel collapsible title="Game Setup" className="flex flex-col">
-        {gameRule && (
+        {gameSetupData && (
           <div className="flex justify-between items-start gap-4">
             <div className="flex flex-col">
-              <p className={`flex items-center gap-2 ${gameRule.roles.mimic ? "opacity-100" : "opacity-30"}`}>
+              <p className={`flex items-center gap-2 ${gameSetupData.roles?.mimic ? "opacity-100" : "opacity-30"}`}>
                 <strong>
                   The Mimic:
                 </strong>
@@ -236,7 +293,7 @@ export default function PlayPage() {
                   })()}
                 </strong>
               </p>
-              <p className={`flex items-center gap-2 ${gameRule.roles.void ? "opacity-100" : "opacity-20"}`}>
+              <p className={`flex items-center gap-2 ${gameSetupData.roles?.void ? "opacity-100" : "opacity-20"}`}>
                 <strong>
                   The Void:
                 </strong>
@@ -254,7 +311,7 @@ export default function PlayPage() {
                   Language:
                 </strong>
                 <strong>
-                  {gameRule.language}
+                  {gameSetupData.language === "en" ? "English" : "Indonesian"}
                 </strong>
               </p>
               <p className="flex items-center gap-2">
@@ -262,7 +319,7 @@ export default function PlayPage() {
                   Category:
                 </strong>
                 <strong>
-                  {gameRule.category}
+                  {gameSetupData.category}
                 </strong>
               </p>
             </div>
@@ -296,32 +353,16 @@ export default function PlayPage() {
         <div className="flex flex-col gap-4">
           <h2 className="text-2xl font-bold">Game Setup</h2>
           <div className="flex flex-col gap-1">
-            <SwitchInput label="The Mimic" checked={roomData?.gameRule.roles.mimic || false} disabled onCheckedChange={() => null} />
+            <SwitchInput label="The Mimic" checked={roomData?.gameRule.roles.mimic || false} disabled onCheckedChange={(value) => handleSetupFormChange("roles", { mimic: value })} />
             <small className="text-zinc-500">The Mimic is who get different word than other players.</small>
-            <SwitchInput label="The Void" checked={roomData?.gameRule.roles.void || false} disabled={roomData?.roomPlayers?.length && roomData?.roomPlayers?.length < 5 ? true : false} onCheckedChange={() => null} />
+            <SwitchInput label="The Void" checked={roomData?.gameRule.roles.void || false} disabled={roomData?.roomPlayers?.length && roomData?.roomPlayers?.length < 5 ? true : false} onCheckedChange={(value) => handleSetupFormChange("roles", { void: value })} />
             <small className="text-zinc-500">The Void is who not get any word.</small>
           </div>
-          <SelectInput label="Language" options={["English", "Indonesian"]} value={roomData?.gameRule.language || "English"} onChange={() => null} />
+          <SelectLanguages socket={socket} value={setupFormData.language} onChange={(value) => handleSetupFormChange("language", value)} />
           <h3 className="text-lg font-bold">Categories</h3>
-          <div className="flex gap-2 w-full max-w-full overflow-auto pb-3">
-            <div role="button" className="shrink-0 flex justify-center items-center w-3/12 bg-zinc-200 rounded-lg text-center p-4">
-              Category 1
-            </div>
-            <div role="button" className="shrink-0 flex justify-center items-center w-3/12 bg-zinc-200 rounded-lg text-center p-4">
-              Category 2
-            </div>
-            <div role="button" className="shrink-0 flex justify-center items-center w-3/12 bg-zinc-200 rounded-lg text-center p-4">
-              Category 3
-            </div>
-            <div role="button" className="shrink-0 flex justify-center items-center w-3/12 bg-zinc-200 rounded-lg text-center p-4">
-              Category 4
-            </div>
-            <div role="button" className="shrink-0 flex justify-center items-center w-3/12 bg-zinc-200 rounded-lg text-center p-4">
-              Category 5
-            </div>
-          </div>
+          <CategoriesOption socket={socket} lang={setupFormData.language || "en"} selected={setupFormData.category} onChange={(value) => handleSetupFormChange("category", value)} />
           <div className="flex justify-end gap-2 w-full">
-            <Button variant="primary" size="sm" onClick={() => setGameSetupModal(false)} className="w-full max-w-40">Save</Button>
+            <Button variant="primary" size="sm" onClick={handleSaveGameSetup} className="w-full max-w-40">Save</Button>
           </div>
         </div>
       </Modal>

@@ -137,3 +137,16 @@ interface RoomInfo {
   createdAt: Date;
   updatedAt: Date;
 }
+
+interface LanguageOption {
+  label: string;
+  value: string;
+}
+
+interface LanguageOptionResponse {
+  success: boolean;
+  message: string;
+  data: {
+    languages: LanguageOption[];
+  };
+}

@@ -5,13 +5,18 @@ import { ChevronDown, Check } from "lucide-react";
 
 interface SelectInputProps {
   label: string;
-  options: string[];
+  options: Option[];
   value: string;
   onChange: (value: string) => void;
   error?: string;
   disabled?: boolean;
   placeholder?: string;
   className?: string;
+}
+
+interface Option {
+  label: string;
+  value: string;
 }
 
 export default function SelectInput({
@@ -30,8 +35,8 @@ export default function SelectInput({
   const [open, setOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
 
-  const selectedIndex = options.indexOf(value);
-  const displayLabel = value || placeholder;
+  const selectedIndex = options.findIndex((option) => option.value === value);
+  const displayLabel = options.find((option) => option.value === value)?.label || placeholder;
 
   const close = useCallback(() => {
     setOpen(false);
@@ -51,8 +56,8 @@ export default function SelectInput({
     if (open) setHighlightedIndex(selectedIndex >= 0 ? selectedIndex : 0);
   }, [open, selectedIndex]);
 
-  const selectOption = (option: string) => {
-    onChange(option);
+  const selectOption = (option: Option) => {
+    onChange(option.value);
     setOpen(false);
   };
 
@@ -141,11 +146,11 @@ export default function SelectInput({
           onKeyDown={onListKeyDown}
         >
           {options.map((option, index) => {
-            const isSelected = option === value;
+            const isSelected = option.value === value;
             const isHighlighted = index === highlightedIndex;
             return (
               <li
-                key={option}
+                key={option.value}
                 role="option"
                 aria-selected={isSelected}
                 className={[
@@ -157,7 +162,7 @@ export default function SelectInput({
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => selectOption(option)}
               >
-                <span className="truncate">{option}</span>
+                <span className="truncate">{option.label}</span>
                 {isSelected && <Check className="h-4 w-4 shrink-0 text-sky-600" strokeWidth={2.5} aria-hidden />}
               </li>
             );

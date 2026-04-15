@@ -150,3 +150,14 @@ interface LanguageOptionResponse {
     languages: LanguageOption[];
   };
 }
+
+interface GameRuleUpdatePayload {
+  roomId: string;
+  gameRule: GameRule;
+}
+
+interface GameRuleUpdateResponse {
+  success: boolean;
+  message: string;
+  data: RoomInfo;
+}

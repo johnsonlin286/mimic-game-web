@@ -77,7 +77,7 @@ interface RoomKickPlayerResponse {
   success: boolean;
   message: string;
   data: {
-    room: RoomInfo;
+    room: RoomResponseData;
   }
 }
 
@@ -159,5 +159,5 @@ interface GameRuleUpdatePayload {
 interface GameRuleUpdateResponse {
   success: boolean;
   message: string;
-  data: RoomInfo;
+  data: RoomResponseData;
 }

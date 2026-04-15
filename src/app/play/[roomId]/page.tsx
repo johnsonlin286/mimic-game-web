@@ -35,7 +35,7 @@ export default function PlayPage() {
   const [isHost, setIsHost] = useState(false);
   const { socket, isConnected, socketConnect } = useSocket();
   const { data: session } = useSession();
-  const { roomId, roomMaxPlayers, roomPlayers, gameRule, isPublic, createdAt, updatedAt, resetRoom } = useRoomStore();
+  const { roomId, roomMaxPlayers, roomPlayers, gameRule, isPublic, createdAt, updatedAt, setRoom, resetRoom } = useRoomStore();
 
   useEffect(() => {
     setRoomData({
@@ -118,16 +118,19 @@ export default function PlayPage() {
     const onJoinSuccess = (response: RoomJoinResponse) => {
       console.log("listen room-join-success", response);
       setRoomData(response.data);
+      setRoom(response.data);
     };
 
     const onLeaveSuccess = (response: RoomRejoinResponse) => {
       console.log("listen room-leave-success", response);
       setRoomData(response.data);
+      setRoom(response.data);
     };
 
     const onHostLeft = (response: RoomRejoinResponse) => {
       console.log("listen room-host-left", response);
       setRoomData(response.data);
+      setRoom(response.data);
     };
 
     const onKicked = (response: unknown) => {
@@ -140,6 +143,19 @@ export default function PlayPage() {
       console.log("listen room-kick-player", response);
       const { room } = response.data;
       setRoomData(room);
+      setRoom(room);
+    };
+
+    const onGameRuleUpdateSuccess = (response: GameRuleUpdateResponse) => {
+      const { data } = response;
+      setRoomData(data);
+      setGameSetupData({
+        ...data.gameRule,
+      });
+      setSetupFormData({
+        ...data.gameRule,
+      });
+      setRoom(data);
     };
 
     socket.on("listen-room-join-success", onJoinSuccess);
@@ -147,6 +163,7 @@ export default function PlayPage() {
     socket.on("listen-room-host-left", onHostLeft);
     socket.on("listen-room-kicked-player", onKicked);
     socket.on("listen-room-kick-player", onKickPlayer);
+    socket.on("listen-game-rule-update-success", onGameRuleUpdateSuccess);
 
     return () => {
       socket.off("listen-room-join-success", onJoinSuccess);
@@ -154,8 +171,9 @@ export default function PlayPage() {
       socket.off("listen-room-host-left", onHostLeft);
       socket.off("listen-room-kicked-player", onKicked);
       socket.off("listen-room-kick-player", onKickPlayer);
+      socket.off("listen-game-rule-update-success", onGameRuleUpdateSuccess);
     };
-  }, [socket, isConnected, router, resetRoom]);
+  }, [socket, isConnected, router, resetRoom, setRoom]);
 
   useEffect(() => {
     if (pendingDisconnectTimer) {
@@ -252,15 +270,12 @@ export default function PlayPage() {
     socket.emit("game:update-rule", {
       roomId,
       gameRule: setupFormData,
-    }).on("game-rule-update-success", (response: GameRuleUpdateResponse) => {
-      const { data } = response;
-      setRoomData(data);
-    }).on('game-rule-update-failed', (response: GameRuleUpdateResponse) => {
+    }).on("game-rule-update-failed", (response: GameRuleUpdateResponse) => {
       const { message } = response;
       switch (message) {
         case "Room not found":
           resetRoom();
-          router.push("/");
+          emitLeave();
           break;
         default:
           break;

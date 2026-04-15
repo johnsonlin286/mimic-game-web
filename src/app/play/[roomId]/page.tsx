@@ -3,20 +3,11 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Crown, Wrench } from "lucide-react";
 
 import { useRoomStore } from "@/store/room-state";
 import useSocket, { getSocket } from "@/hooks/useSocket";
-import Panel from "@/components/Panel";
-import LabelPill from "@/components/LabelPill";
-import Container from "@/components/Container";
-import CopyInput from "@/components/CopyInput";
-import SwitchInput from "@/components/SwitchInput";
-import SelectLanguages from "@/components/SelectLanguages";
-import CategoriesOption from "@/components/CategoriesOption";
-import Modal from "@/components/Modal";
-import Button from "@/components/Button";
 import PlayGame from "@/components/Play/Game";
+import PlayLoby from "@/components/Play/Loby";
 
 let pendingDisconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -124,33 +115,47 @@ export default function PlayPage() {
 
   useEffect(() => {
     if (!socket || !isConnected) return;
-    socket.on("listen-room-join-success", (response: RoomJoinResponse) => {
+    const onJoinSuccess = (response: RoomJoinResponse) => {
       console.log("listen room-join-success", response);
       setRoomData(response.data);
-    });
+    };
 
-    socket.on("listen-room-leave-success", (response: RoomRejoinResponse) => {
+    const onLeaveSuccess = (response: RoomRejoinResponse) => {
       console.log("listen room-leave-success", response);
       setRoomData(response.data);
-    });
+    };
 
-    socket.on("listen-room-host-left", (response: RoomRejoinResponse) => {
+    const onHostLeft = (response: RoomRejoinResponse) => {
       console.log("listen room-host-left", response);
       setRoomData(response.data);
-    });
+    };
 
-    socket.on("listen-room-kicked-player", (response) => {
+    const onKicked = (response: unknown) => {
       console.log("listen room-kicked-player", response);
       resetRoom();
       router.push("/");
-    });
+    };
 
-    socket.on("listen-room-kick-player", (response: RoomKickPlayerResponse) => {
+    const onKickPlayer = (response: RoomKickPlayerResponse) => {
       console.log("listen room-kick-player", response);
       const { room } = response.data;
       setRoomData(room);
-    });
-  }, [socket, isConnected, router, isPublic, resetRoom]);
+    };
+
+    socket.on("listen-room-join-success", onJoinSuccess);
+    socket.on("listen-room-leave-success", onLeaveSuccess);
+    socket.on("listen-room-host-left", onHostLeft);
+    socket.on("listen-room-kicked-player", onKicked);
+    socket.on("listen-room-kick-player", onKickPlayer);
+
+    return () => {
+      socket.off("listen-room-join-success", onJoinSuccess);
+      socket.off("listen-room-leave-success", onLeaveSuccess);
+      socket.off("listen-room-host-left", onHostLeft);
+      socket.off("listen-room-kicked-player", onKicked);
+      socket.off("listen-room-kick-player", onKickPlayer);
+    };
+  }, [socket, isConnected, router, resetRoom]);
 
   useEffect(() => {
     if (pendingDisconnectTimer) {
@@ -269,122 +274,22 @@ export default function PlayPage() {
   }
 
   return (
-    <Container className="py-4">
-      <Panel collapsible title="Room Information" className="flex flex-col">
-        <div className="flex justify-between items-start">
-          <div className="flex flex-col gap-0.5">
-            <p className="text-sm text-zinc-500">
-              <strong className="font-bold">Room ID:</strong> {roomId}
-            </p>
-            <p className="text-sm text-zinc-500">
-              <strong className="font-bold">Players:</strong> {roomPlayers.length} / {roomMaxPlayers}
-              <LabelPill variant={roomData?.gameRule.status === "waiting" ? "warning" : roomData?.gameRule.status === "ready" ? "success" : "neutral"} className="ml-2" />
-            </p>
-          </div>
-          <Button variant="danger" onClick={emitLeave}>Leave Room</Button>
-        </div>
-        {isHost && (
-          <CopyInput label="Invite Link" value={`${process.env.NEXT_PUBLIC_BASE_URL}/join/${roomId}`} />
-        )}
-      </Panel>
-      <Panel collapsible title="Game Setup" className="flex flex-col">
-        {gameSetupData && (
-          <div className="flex justify-between items-start gap-4">
-            <div className="flex flex-col">
-              <p className={`flex items-center gap-2 ${gameSetupData.roles?.mimic ? "opacity-100" : "opacity-30"}`}>
-                <strong>
-                  The Mimic:
-                </strong>
-                <strong>
-                  {(() => {
-                    const n = roomData?.roomPlayers?.length ?? 0;
-                    if (n >= 9) return "3";
-                    if (n >= 7) return "2";
-                    return "1";
-                  })()}
-                </strong>
-              </p>
-              <p className={`flex items-center gap-2 ${gameSetupData.roles?.void ? "opacity-100" : "opacity-20"}`}>
-                <strong>
-                  The Void:
-                </strong>
-                <strong>
-                  {(() => {
-                    const n = roomData?.roomPlayers?.length ?? 0;
-                    if (n >= 5) return "1";
-                    if (n >= 11) return "2";
-                    return "0";
-                  })()}
-                </strong>
-              </p>
-              <p className="flex items-center gap-2">
-                <strong>
-                  Language:
-                </strong>
-                <strong>
-                  {gameSetupData.language === "en" ? "English" : "Indonesian"}
-                </strong>
-              </p>
-              <p className="flex items-center gap-2">
-                <strong>
-                  Category:
-                </strong>
-                <strong>
-                  {gameSetupData.category}
-                </strong>
-              </p>
-            </div>
-            <div>
-              {isHost && (
-                <Button variant="secondary" size="sm" onClick={() => setGameSetupModal(true)} className="flex items-center justify-center gap-2">
-                  <Wrench className="w-4 h-4" />
-                  Edit
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
-      </Panel>
-      <Panel collapsible title="Players">
-        <ul className="flex flex-col gap-2">
-          {roomData?.roomPlayers.map((player, index) => (
-            <li key={index} className="flex items-center justify-between gap-2 not-last:border-b border-zinc-200 pb-2">
-              <strong className="font-bold flex items-center gap-2">
-                {player.playerName}
-                {player.role === "host" && <Crown />}
-              </strong>
-              {isHost && player.playerEmail !== session?.user?.email && (
-                <Button size="sm" variant="danger" onClick={() => emitKickPlayer(player.socketId, player.playerEmail)}>
-                  Kick Player
-                </Button>
-              )}
-            </li>
-          ))}
-        </ul>
-      </Panel>
-      {isHost && (
-        <Button variant="success" size="lg" disabled={roomData?.gameRule.status === "ready" ? false : true} onClick={() => null} className="w-full">
-          Start Game
-        </Button>
-      )}
-      <Modal isOpen={gameSetupModal} onClose={() => setGameSetupModal(false)}>
-        <div className="flex flex-col gap-4">
-          <h2 className="text-2xl font-bold">Game Setup</h2>
-          <div className="flex flex-col gap-1">
-            <SwitchInput label="The Mimic" checked={roomData?.gameRule.roles.mimic || false} disabled onCheckedChange={(value) => handleSetupFormChange("roles", { mimic: value })} />
-            <small className="text-zinc-500">The Mimic is who get different word than other players.</small>
-            <SwitchInput label="The Void" checked={roomData?.gameRule.roles.void || false} disabled={roomData?.roomPlayers?.length && roomData?.roomPlayers?.length < 5 ? true : false} onCheckedChange={(value) => handleSetupFormChange("roles", { void: value })} />
-            <small className="text-zinc-500">The Void is who not get any word.</small>
-          </div>
-          <SelectLanguages socket={socket} value={setupFormData.language} onChange={(value) => handleSetupFormChange("language", value)} />
-          <h3 className="text-lg font-bold">Categories</h3>
-          <CategoriesOption socket={socket} lang={setupFormData.language || "en"} selected={setupFormData.category} onChange={(value) => handleSetupFormChange("category", value)} />
-          <div className="flex justify-end gap-2 w-full">
-            <Button variant="primary" size="sm" onClick={handleSaveGameSetup} className="w-full max-w-40">Save</Button>
-          </div>
-        </div>
-      </Modal>
-      <pre>{JSON.stringify(roomData, null, 2)}</pre>
-    </Container>
+    <PlayLoby
+      roomId={roomId}
+      roomMaxPlayers={roomMaxPlayers}
+      roomPlayers={roomPlayers}
+      roomData={roomData}
+      isHost={isHost}
+      sessionEmail={session?.user?.email}
+      gameSetupData={gameSetupData}
+      setupFormData={setupFormData}
+      socket={socket}
+      gameSetupModalOpen={gameSetupModal}
+      setGameSetupModalOpen={setGameSetupModal}
+      onLeave={emitLeave}
+      onKickPlayer={emitKickPlayer}
+      onSetupChange={handleSetupFormChange}
+      onSaveSetup={handleSaveGameSetup}
+    />
   );
 }

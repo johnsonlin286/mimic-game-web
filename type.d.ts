@@ -77,7 +77,7 @@ interface RoomKickPlayerResponse {
   success: boolean;
   message: string;
   data: {
-    room: RoomInfo;
+    room: RoomResponseData;
   }
 }
 
@@ -153,11 +153,11 @@ interface LanguageOptionResponse {
 
 interface GameRuleUpdatePayload {
   roomId: string;
-  gameRule: GameRule;
+  gameRule: RoomResponseData;
 }
 
 interface GameRuleUpdateResponse {
   success: boolean;
   message: string;
-  data: RoomInfo;
+  data: RoomResponseData;
 }

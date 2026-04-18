@@ -37,7 +37,7 @@ export default function Home() {
   });
   const [createRoomError, setCreateRoomError] = useState<CreateRoomError | null>(null);
   const { data: session } = useSession();
-  const { socket, isConnected, socketConnect } = useSocket();
+  const { socket, isConnected, socketConnect, socketDisconnect } = useSocket();
   const { setRoom } = useRoomStore();
 
   const { data: allRooms } = useQuery({
@@ -112,8 +112,9 @@ export default function Home() {
             setCreateRoomError({ ...createRoomError, generalError: "An error occurred while creating the room" });
             break;
         }
+        socketDisconnect();
       });
-  }, [session, isConnected, createRoomFormData, createRoomError, socket, socketConnect, setRoom, router]);
+  }, [session, isConnected, createRoomFormData, createRoomError, socket, socketConnect, socketDisconnect, setRoom, router]);
 
   const formValidation = useCallback(() => {
     setCreateRoomError(null);

@@ -16,6 +16,7 @@ import SelectLanguages from "@/components/SelectLanguages";
 import CategoriesOption from "@/components/CategoriesOption";
 import Modal from "@/components/Modal";
 import Button from "@/components/Button";
+import PlayLobby from "@/components/Play/Lobby";
 import PlayGame from "@/components/Play/Game";
 
 let pendingDisconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -44,7 +45,7 @@ export default function PlayPage() {
   const [isHost, setIsHost] = useState(false);
   const { socket, isConnected, socketConnect } = useSocket();
   const { data: session } = useSession();
-  const { roomId, roomMaxPlayers, roomPlayers, gameRule, isPublic, createdAt, updatedAt, resetRoom } = useRoomStore();
+  const { roomId, roomMaxPlayers, roomPlayers, gameRule, isPublic, createdAt, updatedAt, setRoom, resetRoom } = useRoomStore();
 
   useEffect(() => {
     setRoomData({
@@ -122,35 +123,41 @@ export default function PlayPage() {
     hasRejoinedRef.current = false;
   }, [roomId]);
 
-  useEffect(() => {
-    if (!socket || !isConnected) return;
-    socket.on("listen-room-join-success", (response: RoomJoinResponse) => {
-      console.log("listen room-join-success", response);
-      setRoomData(response.data);
-    });
+  // useEffect(() => {
+  //   if (!socket || !isConnected) return;
+  //   socket.on("listen-room-join-success", (response: RoomJoinResponse) => {
+  //     console.log("listen room-join-success", response);
+  //     setRoomData(response.data);
+  //   });
 
-    socket.on("listen-room-leave-success", (response: RoomRejoinResponse) => {
-      console.log("listen room-leave-success", response);
-      setRoomData(response.data);
-    });
+  //   socket.on("listen-room-leave-success", (response: RoomRejoinResponse) => {
+  //     console.log("listen room-leave-success", response);
+  //     setRoomData(response.data);
+  //   });
 
-    socket.on("listen-room-host-left", (response: RoomRejoinResponse) => {
-      console.log("listen room-host-left", response);
-      setRoomData(response.data);
-    });
+  //   socket.on("listen-room-host-left", (response: RoomRejoinResponse) => {
+  //     console.log("listen room-host-left", response);
+  //     setRoomData(response.data);
+  //   });
 
-    socket.on("listen-room-kicked-player", (response) => {
-      console.log("listen room-kicked-player", response);
-      resetRoom();
-      router.push("/");
-    });
+  //   socket.on("listen-room-kicked-player", (response) => {
+  //     console.log("listen room-kicked-player", response);
+  //     resetRoom();
+  //     router.push("/");
+  //   });
 
-    socket.on("listen-room-kick-player", (response: RoomKickPlayerResponse) => {
-      console.log("listen room-kick-player", response);
-      const { room } = response.data;
-      setRoomData(room);
-    });
-  }, [socket, isConnected, router, isPublic, resetRoom]);
+  //   socket.on("listen-room-kick-player", (response: RoomKickPlayerResponse) => {
+  //     console.log("listen room-kick-player", response);
+  //     const { room } = response.data;
+  //     setRoomData(room);
+  //   });
+
+  //   socket.on("listen-game-rule-update-success", (response: GameRuleUpdateResponse) => {
+  //     console.log("listen room-game-rule-updated", response);
+  //     setRoom(response.data as RoomResponseData);
+  //     setRoomData(response.data as RoomInfo);
+  //   });
+  // }, [socket, isConnected, router, isPublic, setRoom, resetRoom]);
 
   useEffect(() => {
     if (pendingDisconnectTimer) {
@@ -247,9 +254,6 @@ export default function PlayPage() {
     socket.emit("game:update-rule", {
       roomId,
       gameRule: setupFormData,
-    }).on("game-rule-update-success", (response: GameRuleUpdateResponse) => {
-      const { data } = response;
-      setRoomData(data);
     }).on('game-rule-update-failed', (response: GameRuleUpdateResponse) => {
       const { message } = response;
       switch (message) {
@@ -264,13 +268,10 @@ export default function PlayPage() {
     setGameSetupModal(false);
   }
 
-  if (roomData?.gameRule.status === "playing") {
-    return <PlayGame />;
-  }
-
   return (
     <Container className="py-4">
-      <Panel collapsible title="Room Information" className="flex flex-col">
+      <PlayLobby />
+      {/* <Panel collapsible title="Room Information" className="flex flex-col">
         <div className="flex justify-between items-start">
           <div className="flex flex-col gap-0.5">
             <p className="text-sm text-zinc-500">
@@ -286,8 +287,8 @@ export default function PlayPage() {
         {isHost && (
           <CopyInput label="Invite Link" value={`${process.env.NEXT_PUBLIC_BASE_URL}/join/${roomId}`} />
         )}
-      </Panel>
-      <Panel collapsible title="Game Setup" className="flex flex-col">
+      </Panel> */}
+      {/* <Panel collapsible title="Game Setup" className="flex flex-col">
         {gameSetupData && (
           <div className="flex justify-between items-start gap-4">
             <div className="flex flex-col">
@@ -344,8 +345,8 @@ export default function PlayPage() {
             </div>
           </div>
         )}
-      </Panel>
-      <Panel collapsible title="Players">
+      </Panel> */}
+      {/* <Panel collapsible title="Players">
         <ul className="flex flex-col gap-2">
           {roomData?.roomPlayers.map((player, index) => (
             <li key={index} className="flex items-center justify-between gap-2 not-last:border-b border-zinc-200 pb-2">
@@ -361,13 +362,13 @@ export default function PlayPage() {
             </li>
           ))}
         </ul>
-      </Panel>
+      </Panel> */}
       {isHost && (
         <Button variant="success" size="lg" disabled={roomData?.gameRule.status === "ready" ? false : true} onClick={() => null} className="w-full">
           Start Game
         </Button>
       )}
-      <Modal isOpen={gameSetupModal} onClose={() => setGameSetupModal(false)}>
+      {/* <Modal isOpen={gameSetupModal} onClose={() => setGameSetupModal(false)}>
         <div className="flex flex-col gap-4">
           <h2 className="text-2xl font-bold">Game Setup</h2>
           <div className="flex flex-col gap-1">
@@ -383,7 +384,7 @@ export default function PlayPage() {
             <Button variant="primary" size="sm" onClick={handleSaveGameSetup} className="w-full max-w-40">Save</Button>
           </div>
         </div>
-      </Modal>
+      </Modal> */}
       <pre>{JSON.stringify(roomData, null, 2)}</pre>
     </Container>
   );

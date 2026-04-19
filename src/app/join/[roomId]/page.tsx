@@ -153,7 +153,7 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
         <div className="flex flex-col gap-4">
           <h2 className="text-2xl font-bold">Join Room</h2>
           {joinRoomError?.generalError && <p className="text-red-500">{joinRoomError.generalError}</p>}
-          <Input placeholder="Player Name" value={joinRoomFormData.playerName} onChange={(e) => setJoinRoomFormData({ ...joinRoomFormData, playerName: e.target.value.toLowerCase() })} error={joinRoomError?.playerName} />
+          <Input placeholder="Player Name" value={joinRoomFormData.playerName} onChange={(e) => setJoinRoomFormData({ ...joinRoomFormData, playerName: e.target.value })} error={joinRoomError?.playerName} />
           <Button onClick={formValidation}>Join Room</Button>
         </div>
       </Modal>

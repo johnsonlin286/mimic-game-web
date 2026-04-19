@@ -161,3 +161,14 @@ interface GameRuleUpdateResponse {
   message: string;
   data: RoomResponseData;
 }
+
+interface GameStartResponse {
+  success: boolean;
+  message: string;
+  data: RoomResponseData;
+}
+
+interface GameStartErrorResponse {
+  success: boolean;
+  message: string;
+}

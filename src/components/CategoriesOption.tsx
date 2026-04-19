@@ -8,8 +8,13 @@ interface CategoriesOptionProps {
   onChange: (value: string) => void;
 }
 
+interface CategoriesType {
+  id: string;
+  label: string;
+}
+
 export default function CategoriesOption({ lang = "en", socket, selected, onChange }: CategoriesOptionProps) {
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<CategoriesType[]>([]);
   const groupName = useId();
 
   useEffect(() => {
@@ -23,18 +28,19 @@ export default function CategoriesOption({ lang = "en", socket, selected, onChan
 
     socket
       .emit(emitEvent)
-      .once(listenEvent, (response: { data?: { categories?: string[] } }) => {
-        setCategories(response?.data?.categories ?? []);
+      .once(listenEvent, (response: { data?: { categories?: CategoriesType[] } }) => {
+        console.log("listen-fetch-categories-options", response);
+        setCategories(response.data?.categories || []);
       });
   }, [socket, lang]);
 
   return (
     <div className="flex gap-2 w-full max-w-full overflow-auto pb-3">
       {categories.map((category) => {
-        const checked = selected === category;
+        const checked = selected === category.id;
         return (
           <label
-            key={category}
+            key={category.id}
             className={[
               "shrink-0 flex justify-center items-center w-3/12 rounded-lg p-3 text-center select-none cursor-pointer",
               "border transition-colors",
@@ -44,12 +50,12 @@ export default function CategoriesOption({ lang = "en", socket, selected, onChan
             <input
               type="radio"
               name={groupName}
-              value={category}
+              value={category.id}
               checked={checked}
-              onChange={() => onChange(category)}
+              onChange={() => onChange(category.id)}
               className="sr-only"
             />
-            {category}
+            {category.label}
           </label>
         );
       })}

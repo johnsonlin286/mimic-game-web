@@ -15,45 +15,13 @@ interface PlayRoomStatusProps {
 export default function PlayRoomStatus({ isHost }: PlayRoomStatusProps) {
   const router = useRouter();
   const { socket } = useSocket();
-  const { roomId, roomMaxPlayers, roomPlayers, gameRule, setRoom, resetRoom } = useRoomStore();
-
-  useEffect(() => {
-    if (!socket) return;
-
-    socket.on("listen-room-join-success", (response: RoomJoinResponse) => {
-      console.log("listen room-join-success", response);
-      setRoom(response.data);
-    });
-
-    socket.on("listen-room-leave-success", (response: RoomRejoinResponse) => {
-      console.log("listen room-leave-success", response);
-      setRoom(response.data);
-    });
-
-    socket.on("listen-room-host-left", (response: RoomRejoinResponse) => {
-      console.log("listen room-host-left", response);
-      setRoom(response.data);
-    });
-
-    socket.on("listen-room-kicked-player", (response) => {
-      console.log("listen room-kicked-player", response);
-      resetRoom();
-      router.push("/");
-    })
-
-    socket.on("listen-room-kick-player", (response: RoomKickPlayerResponse) => {
-      console.log("listen room-kick-player", response);
-      const { room } = response.data;
-      setRoom(room);
-    });
-
-  }, [socket, router, setRoom, resetRoom]);
+  const { roomId, roomMaxPlayers, roomPlayers, gameRule, resetRoom } = useRoomStore();
 
   const emitLeave = useCallback(() => {
-    const currentRoomId = useRoomStore.getState().roomId;
-    if (!socket.connected || !socket.id || !currentRoomId) return;
+    console.log("emitLeave", socket.connected, socket.id, roomId);
+    if (!socket.connected || !socket.id || !roomId) return;
     const payload: RoomLeavePayload = {
-      roomId: currentRoomId,
+      roomId: roomId,
       socketId: socket.id,
     };
     socket.emit("room:leave", payload)
@@ -65,7 +33,7 @@ export default function PlayRoomStatus({ isHost }: PlayRoomStatusProps) {
       .once("room-leave-not-found", (response) => {
         console.error("room-leave-not-found", response);
       });
-  }, [router, resetRoom, socket]);
+  }, [resetRoom, router, socket, roomId]);
 
   return (
     <Panel collapsible title="Room Information" className="flex flex-col">
@@ -76,12 +44,12 @@ export default function PlayRoomStatus({ isHost }: PlayRoomStatusProps) {
           </p>
           <p className="text-sm text-zinc-500">
             <strong className="font-bold">Players:</strong> {roomPlayers.length} / {roomMaxPlayers}
-            <LabelPill variant={gameRule.status === "waiting" ? "warning" : gameRule.status === "ready" ? "success" : "neutral"} className="ml-2" />
+            <LabelPill variant={gameRule.status === "waiting" ? "warning" : gameRule.status === "ready" ? "success" : gameRule.status === "playing" ? "danger" : "neutral"} className="ml-2" />
           </p>
         </div>
         <Button variant="danger" onClick={emitLeave}>Leave Room</Button>
       </div>
-      {isHost && (
+      {isHost && gameRule.status === "waiting" && (
         <CopyInput label="Invite Link" value={`${process.env.NEXT_PUBLIC_BASE_URL}/join/${roomId}`} />
       )}
     </Panel>

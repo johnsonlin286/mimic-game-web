@@ -15,12 +15,26 @@ interface GameRule {
   status: "waiting" | "ready" | "playing" | "finished";
 }
 
+interface PlayerWithRole {
+  socketId: string;
+  playerName: string;
+  playerEmail: string;
+  gameRole: string;
+  gameWord?: string | null;
+  voters?: Partial<PlayerWithRole>[];
+}
+
+interface GameData {
+  players: PlayerWithRole[];
+}
+
 interface RoomResponseData {
   creatorEmail: string;
   roomId: string;
   roomMaxPlayers: number;
   roomPlayers: RoomPlayerData[];
   gameRule: GameRule;
+  gameData: GameData;
   isPublic: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -99,6 +113,7 @@ interface RoomState {
   roomMaxPlayers: number;
   roomPlayers: RoomPlayerData[];
   gameRule: GameRule;
+  gameData: GameData;
   isPublic: boolean;
   createdAt: Date;
   updatedAt: Date;

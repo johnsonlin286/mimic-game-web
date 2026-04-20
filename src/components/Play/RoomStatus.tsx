@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 import useSocket from "@/hooks/useSocket";
@@ -18,7 +18,6 @@ export default function PlayRoomStatus({ isHost }: PlayRoomStatusProps) {
   const { roomId, roomMaxPlayers, roomPlayers, gameRule, resetRoom } = useRoomStore();
 
   const emitLeave = useCallback(() => {
-    console.log("emitLeave", socket.connected, socket.id, roomId);
     if (!socket.connected || !socket.id || !roomId) return;
     const payload: RoomLeavePayload = {
       roomId: roomId,

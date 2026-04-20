@@ -15,13 +15,14 @@ export default function PlayLobby() {
   const isHost = roomPlayers.find((player) => player.playerEmail === session?.user?.email)?.role === "host";
 
   const handleStartGame = useCallback(() => {
-    if (!socket) return;
+    if (!session?.user?.email || !socket || !roomId) return;
     socket.emit("game:start", {
       roomId,
+      playerEmail: session.user.email,
     }).on("game-start-failed", (response: GameStartErrorResponse) => {
       console.log("game-start-failed", response);
     });
-  }, [socket, roomId]);
+  }, [socket, roomId, session]);
 
   return (
     <>

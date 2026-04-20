@@ -17,6 +17,7 @@ export default function Modal({ isOpen, onClose, dismissible = true, children }:
   const [isVisible, setIsVisible] = useState(false);
 
   const handleClose = useCallback(() => {
+    if (!dismissible) return;
     backdropRef.current?.classList.remove('in');
     contentRef.current?.classList.remove('in');
     backdropRef.current?.classList.add('out');
@@ -25,7 +26,7 @@ export default function Modal({ isOpen, onClose, dismissible = true, children }:
       setIsVisible(false);
       onClose();
     });
-  }, [onClose]);
+  }, [onClose, dismissible]);
   
   useEffect(() => {
     if (isOpen) {

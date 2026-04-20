@@ -57,6 +57,11 @@ export default function PlayPage() {
       setRoom(response.data);
     });
 
+    socket.on("listen-game-initialize-success", (response) => {
+      console.log("listen game-initialize-success", response);
+      setRoom(response.data);
+    })
+
   }, [socket, router, setRoom, resetRoom]);
 
   useEffect(() => {
@@ -130,7 +135,7 @@ export default function PlayPage() {
     <Container className="py-4">
       <RoomStatus isHost={isHost} />
       {gameRule.status === "playing" ? (
-        <PlayGame />
+        <PlayGame isHost={isHost} />
       ) : gameRule.status === 'finished' ? (
         <></>
       ) : (

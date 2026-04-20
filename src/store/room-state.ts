@@ -17,15 +17,19 @@ export const useRoomStore = create<RoomState>()(
         language: "en",
         status: "waiting",
       },
+      gameData: {
+        players: [],
+      },
       isPublic: true,
       createdAt: new Date(),
       updatedAt: new Date(),
-      setRoom: (room: RoomResponseData) => set(() => ({
+      setRoom: (room: Partial<RoomResponseData>) => set(() => ({
         roomId: room.roomId,
         creatorEmail: room.creatorEmail,
         roomMaxPlayers: room.roomMaxPlayers,
         roomPlayers: room.roomPlayers,
         gameRule: room.gameRule,
+        gameData: room.gameData,
         isPublic: room.isPublic,
         createdAt: room.createdAt,
         updatedAt: room.updatedAt,

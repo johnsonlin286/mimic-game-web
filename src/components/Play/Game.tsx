@@ -42,11 +42,6 @@ export default function PlayGame({ isHost }: PlaGameProps) {
   return (
     <div className="h-[calc(100vh-15rem)] flex flex-col justify-between gap-2">
       <WordCard word={gameWord} />
-      {/* {isHost && (
-        <div className="flex justify-center items-center">
-          <VoteBoard />
-        </div>
-      )} */}
       <div className="flex justify-center items-center">
         <VoteBoard />
       </div>

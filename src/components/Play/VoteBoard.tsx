@@ -10,6 +10,7 @@ import Modal from "@/components/Modal";
 export default function VoteBoard() {
   const [openModal, setOpenModal] = useState(false);
   const [allVoted, setAllVoted] = useState<boolean>(false);
+  const [winStatus, setWinStatus] = useState<string | null>(null);
   const { socket } = useSocket();
   const { data: session } = useSession();
   const { roomId, roomPlayers, gameData, setRoom } = useRoomStore();
@@ -33,6 +34,35 @@ export default function VoteBoard() {
       console.log("listen-game-all-players-voted");
       setAllVoted(true);
     })
+
+    socket.on("listen-game-calculate-results-failed", (response) => {
+      console.log("listen-game-calculate-results-failed", response);
+    })
+
+    socket.on("listen-game-calculate-results", (response) => {
+      console.log("listen-game-calculate-results", response);
+      const { message, data } = response;
+      switch (message) {
+        case "Mimic is the winner":
+          setWinStatus("mimic");
+          break;
+        case "Void is the winner":
+          setWinStatus("void");
+          break;
+        case "Original is the winner":
+          setWinStatus("original");
+          break;
+        default:
+          setWinStatus("none");
+          break;
+      }
+      setRoom(data);
+    })
+
+    socket.on("listen-game-void-got-caught", () => {
+      console.log("listen-game-void-got-caught");
+    })
+
   }, [socket, setRoom]);
 
   const voteRequest = useCallback(() => {
@@ -46,7 +76,6 @@ export default function VoteBoard() {
   }, [socket, roomId, session]);
 
   const voteHandler = useCallback((playerEmail: string) => {
-    // if (hasVoted) return;
     if (!session?.user?.email || !socket || !roomId) return;
     console.log("voteHandler", playerEmail);
     socket.emit("game:vote-response", {
@@ -54,45 +83,86 @@ export default function VoteBoard() {
       playerEmail: session.user.email,
       votedEmail: playerEmail,
     }).on("game-vote-response-failed", (response) => {
-      console.log("game-vote-response-failed", response);  
+      console.log("game-vote-response-failed", response);
     })
   }, [session, socket, roomId]);
 
+  const submitVote = useCallback(() => {
+    if (!session?.user?.email || !socket || !roomId) return;
+    socket.emit("game:calculate-results", {
+      roomId,
+      playerEmail: session.user.email,
+    }).on("game-calculate-results-failed", (response) => {
+      console.log("game-calculate-results-failed", response);
+    })
+  }, [socket, roomId, session])
+
   return (
     <>
-      <Button variant="primary" size="md" onClick={voteRequest}>Vote Board</Button>
+      {isHost && <Button variant="primary" size="md" onClick={voteRequest}>Vote Board</Button>}
       <Modal isOpen={openModal} dismissible={false} onClose={() => setOpenModal(false)}>
         <div className="flex flex-col gap-4">
-          <h2 className="text-2xl font-bold">Vote Board</h2>
-          <ol className="flex flex-col gap-2 border-t border-zinc-300 py-2">
-            {gameData?.players?.map((player: PlayerWithRole) => (
-              <li key={player.playerEmail} className="flex items-center justify-between gap-2">
-                <strong>{player.playerName}</strong>
-                <ul className="flex flex-col">
-                  {player.voters?.map((voter, index) => (
-                    <li key={index} className="text-xs text-zinc-500">
-                      {voter.playerName}
+          <h2 className="text-2xl font-bold">
+            {!winStatus ? "Vote Board" : "Game Results"}
+          </h2>
+          <div className="flex flex-col gap-2">
+            {winStatus === null ? (
+              <>
+                <ol className="flex flex-col gap-2 border-t border-zinc-300 py-2">
+                  {gameData?.players?.map((player: PlayerWithRole) => (
+                    <li key={player.playerEmail} className="flex items-center justify-between gap-2">
+                      <strong>{player.playerName}</strong>
+                      <ul className="flex flex-col">
+                        {player.voters?.map((voter, index) => (
+                          <li key={index} className="text-xs text-zinc-500">
+                            {voter.playerName}
+                          </li>
+                        ))}
+                      </ul>
+                      {/* <small>vote count: {player.voters?.length}</small> */}
+                      {player.playerEmail !== session?.user?.email ? (
+                        <>
+                          {player.voters?.some((voter) => voter.playerEmail === session?.user?.email) ? (
+                            <CircleCheck className="w-6 h-6 text-green-500" />
+                          ) : (
+                            <Button variant="primary" size="sm" onClick={() => voteHandler(player.playerEmail)}>Vote</Button>
+                          )}
+                        </>
+                      ) : (
+                        <span />
+                      )}
                     </li>
                   ))}
-                </ul>
-                {/* <small>vote count: {player.voters?.length}</small> */}
-                {player.playerEmail !== session?.user?.email ? (
-                  <>
-                    {player.voters?.some((voter) => voter.playerEmail === session?.user?.email) ? (
-                      <CircleCheck className="w-6 h-6 text-green-500" />
-                    ) : (
-                      <Button variant="primary" size="sm" onClick={() => voteHandler(player.playerEmail)}>Vote</Button>
-                    )}
-                  </>
-                ) : (
-                  <span />
+                </ol>
+                {isHost && (
+                  <Button variant="danger" size="md" disabled={!allVoted} onClick={submitVote} className="w-full">Calculate Vote</Button>
                 )}
-              </li>
-            ))}
-          </ol>
-          {isHost && (
-            <Button variant="danger" size="md" disabled={!allVoted} onClick={() => null} className="w-full">Calculate Vote</Button>
-          )}
+              </>
+            ) : winStatus !== null && winStatus !== "none" ? (
+              <>
+                <p className="text-lg text-center font-bold">
+                  The winner is the
+                  {' '}
+                  <span className="capitalize">{winStatus}!</span>
+                </p>
+                {isHost && (
+                  <div className="flex justify-between gap-2">
+                    <Button variant="secondary" size="md" onClick={() => null} className="w-full">Start New Game</Button>
+                    <Button variant="primary" size="md" onClick={() => null} className="w-full">Replay</Button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="text-lg text-center font-bold">
+                  No winner yet!
+                </p>
+                {isHost && (
+                  <Button variant="secondary" size="md" onClick={() => null} className="w-full">Continue</Button>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </Modal>
     </>

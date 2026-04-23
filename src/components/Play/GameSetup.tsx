@@ -50,7 +50,7 @@ export default function PlayGameSetup({ isHost }: PlayGameSetupProps) {
         setSetupFormData((prev) => ({
           ...prev,
           roles: {
-            mimic: (value as { mimic: boolean }).mimic,
+            mimic: setupFormData.roles?.mimic as boolean,
             void: (value as { void: boolean }).void,
           },
         }));

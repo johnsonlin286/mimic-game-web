@@ -135,7 +135,7 @@ export default function PlayPage() {
     <Container className="py-4">
       <RoomStatus isHost={isHost} />
       {gameRule.status === "playing" ? (
-        <PlayGame isHost={isHost} />
+        <PlayGame />
       ) : gameRule.status === 'finished' ? (
         <></>
       ) : (

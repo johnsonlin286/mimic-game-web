@@ -22,6 +22,7 @@ interface PlayerWithRole {
   gameRole: string;
   gameWord?: string | null;
   voters?: Partial<PlayerWithRole>[];
+  isAlive: boolean;
 }
 
 interface GameData {
@@ -186,4 +187,13 @@ interface GameStartResponse {
 interface GameStartErrorResponse {
   success: boolean;
   message: string;
+}
+
+interface GameVoidGuessTheWordIncorrectlyResponse {
+  success: boolean;
+  message: string;
+  data: {
+    outcomeMessage: string;
+    room: RoomResponseData;
+  };
 }

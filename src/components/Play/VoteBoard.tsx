@@ -115,6 +115,16 @@ export default function VoteBoard() {
       setWinStatus(null);
       setGuessWord("");
     })
+
+    socket.on("listen-game-initialize-success", (response) => {
+      console.log("listen game-initialize-success", response);
+      setRoom(response.data);
+      setVoteModal(false);
+      setGuessWordModal(false);
+      setAllVoted(false);
+      setWinStatus(null);
+      setGuessWord("");
+    })
   }, [socket, setRoom]);
 
   const voteRequest = useCallback(() => {
@@ -188,10 +198,10 @@ export default function VoteBoard() {
   const replayGame = useCallback(() => {
     console.log("replayGame");
     if (!session?.user?.email || !socket || !roomId) return;
-    socket.emit("game:replay", {
+    socket.emit("game:initialize", {
       playerEmail: session.user.email,
       roomId,
-    });
+    })
   }, [socket, roomId, session])
 
   return (
@@ -216,7 +226,6 @@ export default function VoteBoard() {
                           </li>
                         ))}
                       </ul>
-                      {/* <small>vote count: {player.voters?.length}</small> */}
                       {player.playerEmail !== session?.user?.email ? (
                         <>
                           {player.voters?.some((voter) => voter.playerEmail === session?.user?.email) ? (
@@ -247,6 +256,10 @@ export default function VoteBoard() {
                       The winner is the
                       {' '}
                       <span className="capitalize">{winStatus}!</span>
+                      <br/>
+                      <strong>The word was: {gameData?.wordPairList[0].originalWord}</strong>
+                      <br/>
+                      <strong>The mimic word was: {gameData?.wordPairList[0].mimicWord}</strong>
                     </p>
                     {isHost && (
                       <div className="flex justify-between gap-2">

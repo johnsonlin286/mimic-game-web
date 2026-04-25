@@ -27,6 +27,10 @@ interface PlayerWithRole {
 
 interface GameData {
   players: PlayerWithRole[];
+  wordPairList: {
+    originalWord: string;
+    mimicWord: string;
+  }[];
 }
 
 interface RoomResponseData {

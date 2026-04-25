@@ -19,6 +19,7 @@ export default function VoteBoard() {
   const { roomId, roomPlayers, gameData, setRoom } = useRoomStore();
 
   const isHost = roomPlayers.find((player) => player.playerEmail === session?.user?.email)?.role === "host";
+  const isAlive = gameData?.players?.find((player: PlayerWithRole) => player.playerEmail === session?.user?.email)?.isAlive;
 
   useEffect(() => {
     if (!socket) return;
@@ -125,7 +126,7 @@ export default function VoteBoard() {
       setWinStatus(null);
       setGuessWord("");
     })
-  }, [socket, setRoom]);
+  }, [socket, setRoom, gameData, session]);
 
   const voteRequest = useCallback(() => {
     if (!session?.user?.email || !socket || !roomId) return;
@@ -230,8 +231,8 @@ export default function VoteBoard() {
                         <>
                           {player.voters?.some((voter) => voter.playerEmail === session?.user?.email) ? (
                             <CircleCheck className="w-6 h-6 text-green-500" />
-                          ) : player.isAlive && (
-                            <Button variant="primary" size="sm" disabled={!player.isAlive} onClick={() => voteHandler(player.playerEmail)}>Vote</Button>
+                          ) : isAlive && player.isAlive && (
+                            <Button variant="primary" size="sm" onClick={() => voteHandler(player.playerEmail)}>Vote</Button>
                           )}
                         </>
                       ) : (

@@ -95,15 +95,7 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
       })
       .on("room-join-success", (response: RoomJoinResponse) => {
         const { data } = response;
-        setRoom({
-          roomId: data.roomId,
-          roomMaxPlayers: data.roomMaxPlayers,
-          roomPlayers: data.roomPlayers,
-          gameRule: data.gameRule,
-          isPublic: data.isPublic,
-          createdAt: data.createdAt,
-          updatedAt: data.updatedAt,
-        } as RoomState);
+        setRoom(data);
         setJoinRoomFormData({
           playerName: "",
         });
@@ -142,7 +134,7 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
               <h2 className="text-2xl font-bold">Join Room</h2>
               <p className="text-sm text-gray-500">Hello {session.user?.name}</p>
               <p className="text-sm text-gray-500">Room ID: {roomId}</p>
-              <Button onClick={() => setJoinRoomModalOpen(true)}>
+              <Button variant="success" onClick={() => setJoinRoomModalOpen(true)}>
                 Join Room
               </Button>
             </>
@@ -154,7 +146,7 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
           <h2 className="text-2xl font-bold">Join Room</h2>
           {joinRoomError?.generalError && <p className="text-red-500">{joinRoomError.generalError}</p>}
           <Input placeholder="Player Name" value={joinRoomFormData.playerName} onChange={(e) => setJoinRoomFormData({ ...joinRoomFormData, playerName: e.target.value })} error={joinRoomError?.playerName} />
-          <Button onClick={formValidation}>Join Room</Button>
+          <Button variant="secondary" onClick={formValidation}>Join Room</Button>
         </div>
       </Modal>
     </Container>

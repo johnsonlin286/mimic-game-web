@@ -10,6 +10,8 @@ import { fetchAllRooms } from "@/services/rooms";
 import { useRoomStore } from "@/store/room-state";
 import useSocket from "@/hooks/useSocket";
 import Container from "@/components/Container";
+import Panel from "@/components/Panel";
+import LabelPill from "@/components/LabelPill";
 import Modal from "@/components/Modal";
 import Input from "@/components/Input";
 import SwitchInput from "@/components/SwitchInput";
@@ -78,13 +80,14 @@ export default function Home() {
         console.log("room-created", data);
         setRoom({
           roomId: data.roomId,
+          creatorName: data.creatorName,
           roomMaxPlayers: data.roomMaxPlayers,
           roomPlayers: data.roomPlayers,
           gameRule: data.gameRule,
           isPublic: data.isPublic,
           createdAt: data.createdAt,
           updatedAt: data.updatedAt,
-        } as RoomState);
+        } as RoomResponseData);
         setCreateRoomFormData({
           playerName: "",
           roomMaxPlayers: 3,
@@ -134,16 +137,23 @@ export default function Home() {
   }, [createRoomFormData, handleCreateRoom]);
 
   return (
-    <Container>
-      HOME PAGE
-      <Button onClick={openCreateRoomModal}>Create Room</Button>
-      <pre>{JSON.stringify(allRooms, null, 2)}</pre>
+    <Container className="flex flex-col gap-4 py-5">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl text-white font-bold">Home Page</h1>
+        <Button variant="secondary" onClick={openCreateRoomModal}>Create Room</Button>
+      </div>
+      {/* <pre className="text-white text-xs">{JSON.stringify(allRooms, null, 2)}</pre> */}
       {allRooms?.map((room, index) => (
-        <div key={index} className="flex items-center justify-between gap-2">
-          <p>{`creator: ${room.creatorEmail}`}</p>
-          <p>{`max players: ${room.roomPlayers.length} / ${room.roomMaxPlayers}`}</p>
-          {room.isPublic && <Button variant="secondary" onClick={() => router.push(`/join/${room.roomId}`)}>Join Room</Button>}
-        </div>
+        <Panel key={index} title={`Room ${index + 1}`}>
+          <div className="flex justify-between items-center gap-2">
+            <p>{`creator: ${room.creatorName}`}</p>
+            <p>
+              {`max players: ${room.roomPlayers.length} / ${room.roomMaxPlayers}`}
+              <LabelPill label={room.gameRule.status} variant={room.gameRule.status === "waiting" ? "warning" : room.gameRule.status === "ready" ? "success" : room.gameRule.status === "playing" ? "danger" : "neutral"} className="ml-2" />
+            </p>
+            {room.isPublic && room.gameRule.status === "waiting" ? <Button variant="success" onClick={() => router.push(`/join/${room.roomId}`)}>Join Room</Button> : <span className="block w-2.5 h-2.5" />}
+          </div>
+        </Panel>
       ))}
       <Modal isOpen={createRoomModalOpen} onClose={() => setCreateRoomModalOpen(false)}>
         <div className="flex flex-col gap-4">

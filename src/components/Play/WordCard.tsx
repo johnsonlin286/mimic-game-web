@@ -28,11 +28,11 @@ export default function WordCard({ word }: WordCardProps) {
               </p>
             )}
           </div>
-          <div className="absolute flex flex-col justify-between items-center w-full h-full backface-hidden rotate-y-180 bg-neutral-500 rounded-2xl shadow-lg p-6">
+          <div className="absolute flex flex-col justify-between items-center w-full h-full backface-hidden rotate-y-180 bg-amber-900 rounded-2xl shadow-lg p-6">
             <div className="flex-1 flex justify-center items-center">
-              <strong>LOGO MIMIC</strong>
+              <strong className="text-white text-2xl font-bold">GAME LOGO</strong>
             </div>
-            <p className="text-sm text-zinc-100">Click and hold to flip</p>
+            <p className="text-sm text-zinc-100">Tap and hold to flip the card</p>
           </div>
         </div>
       </div>

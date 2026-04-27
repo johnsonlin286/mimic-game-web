@@ -13,7 +13,7 @@ export default function Button({ variant = "primary", size = "md", disabled = fa
   
   const variantClasses = {
     primary: "bg-blue-500 text-white hover:bg-blue-600",
-    secondary: "bg-sky-500 text-white hover:bg-sky-600",
+    secondary: "bg-yellow-400 text-black hover:bg-yellow-500",
     danger: "bg-red-500 text-white hover:bg-red-600",
     success: "bg-green-500 text-white hover:bg-green-600",
   }[variant];

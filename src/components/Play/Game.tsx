@@ -6,7 +6,6 @@ import useSocket from "@/hooks/useSocket";
 import WordCard from "@/components/Play/WordCard";
 import VoteBoard from "@/components/Play/VoteBoard";
 
-
 export default function PlayGame() {
   const { data: session } = useSession();
   const { socket } = useSocket();

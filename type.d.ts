@@ -35,6 +35,7 @@ interface GameData {
 
 interface RoomResponseData {
   creatorEmail: string;
+  creatorName: string;
   roomId: string;
   roomMaxPlayers: number;
   roomPlayers: RoomPlayerData[];

@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { FETCH_ALL_ROOMS } from "@/services/const";
 import { fetchAllRooms } from "@/services/rooms";
 import { useRoomStore } from "@/store/room-state";
+import { useToastStore } from "@/store/toast-state";
 import useSocket from "@/hooks/useSocket";
 import Container from "@/components/Container";
 import Panel from "@/components/Panel";
@@ -41,7 +42,7 @@ export default function Home() {
   const { data: session } = useSession();
   const { socket, isConnected, socketConnect, socketDisconnect } = useSocket();
   const { setRoom } = useRoomStore();
-
+  const { setToast } = useToastStore();
   const { data: allRooms } = useQuery({
     queryKey: [FETCH_ALL_ROOMS],
     queryFn: fetchAllRooms,
@@ -77,7 +78,8 @@ export default function Home() {
     socket?.emit("room:create", payload)
       .on("room-created", (response: RoomCreateResponse) => {
         const { data } = response;
-        console.log("room-created", data);
+        // console.log("room-created", data);
+        setToast(`Room ${data.roomId} created`, "success");
         setRoom({
           roomId: data.roomId,
           creatorName: data.creatorName,
@@ -117,7 +119,7 @@ export default function Home() {
         }
         socketDisconnect();
       });
-  }, [session, isConnected, createRoomFormData, createRoomError, socket, socketConnect, socketDisconnect, setRoom, router]);
+  }, [session, isConnected, createRoomFormData, createRoomError, socket, socketConnect, socketDisconnect, setRoom, router, setToast]);
 
   const formValidation = useCallback(() => {
     setCreateRoomError(null);

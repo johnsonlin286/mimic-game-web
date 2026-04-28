@@ -61,13 +61,25 @@ interface RoomJoinPayload {
 interface RoomJoinResponse {
   success: boolean;
   message: string;
-  data: RoomResponseData;
+  data: {
+    player: {
+      playerEmail: string;
+      playerName: string;
+    }
+    room: RoomResponseData;
+  }
 }
 
 interface RoomRejoinResponse {
   success: boolean;
   message: string;
-  data: RoomResponseData;
+  data: {
+    player: {
+      playerEmail: string;
+      playerName: string;
+    }
+    room: RoomResponseData;
+  };
 }
 
 interface RoomLeavePayload {
@@ -125,6 +137,14 @@ interface RoomState {
   updatedAt: Date;
   setRoom: (room: RoomResponseData) => void;
   resetRoom: () => void;
+}
+
+interface ToastState {
+  message: string;
+  type: "success" | "error" | "warning" | "info";
+  show: boolean;
+  setToast: (message: string, type: "success" | "error" | "warning" | "info") => void;
+  hideToast: () => void;
 }
 
 interface AllRoomsResponse {

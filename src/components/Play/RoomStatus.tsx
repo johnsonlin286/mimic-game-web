@@ -24,8 +24,8 @@ export default function PlayRoomStatus({ isHost }: PlayRoomStatusProps) {
       socketId: socket.id,
     };
     socket.emit("room:leave", payload)
-      .once("room-leave-success", (response: RoomLeaveResponse) => {
-        console.log("room-leave-success", response);
+      .once("room-leave-success", () => {
+        // console.log("room-leave-success", response);
         resetRoom();
         router.push("/");
       })

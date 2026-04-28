@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 
 import MainWarper from "@/components/MainWarper";
 import Navbar from "@/components/Navbar";
+import Toast from "@/components/Toast";
 
 import "./tailwind.css";
 import "./globals.scss";
@@ -34,6 +35,7 @@ export default function RootLayout({
       >
         <MainWarper>
           <Navbar />
+          <Toast />
           {children}
         </MainWarper>
       </body>

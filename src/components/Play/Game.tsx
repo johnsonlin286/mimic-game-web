@@ -17,7 +17,6 @@ export default function PlayGame() {
     if (!socket) return;
 
     socket.on("listen-game-initialized-player", (response) => {
-      console.log("listen game-initialized-player", response);
       setGameWord(response.data.gameWord);
     })
   }, [socket, setRoom]);
@@ -25,6 +24,7 @@ export default function PlayGame() {
   useEffect(() => {
     const player = gameData?.players?.find((player: PlayerWithRole) => player.playerEmail === session?.user?.email);
     setPlayerData(player ?? null);
+    setGameWord(player?.gameWord ?? "");
   }, [gameData, session])
 
   return (

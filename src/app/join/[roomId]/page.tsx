@@ -2,24 +2,22 @@
 
 import { use, useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query"; 
 import { useSession } from "next-auth/react";
 
 import { useRoomStore } from "@/store/room-state";
+import { fetchRoom } from "@/services/rooms";
 import useSocket from "@/hooks/useSocket";
+import useSocketJoin from "@/hooks/useSocketJoin";
 import Container from "@/components/Container";
 import GoogleLoginBtn from "@/components/GoogleLoginBtn";
 import Modal from "@/components/Modal";
 import Input from "@/components/Input";
+import LabelPill from "@/components/LabelPill";
 import Button from "@/components/Button";
 
 interface JoinRoomFormData {
   playerName: string;
-}
-
-interface JoinRoomError {
-  playerName?: string;
-  roomPin?: string;
-  generalError?: string;
 }
 
 let pendingDisconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -32,10 +30,11 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
   const [joinRoomFormData, setJoinRoomFormData] = useState<JoinRoomFormData>({
     playerName: "",
   });
-  const [joinRoomError, setJoinRoomError] = useState<JoinRoomError | null>(null);
+  const [formError, setFormError] = useState<string | undefined>();
+  const { joinRoom, joinRoomError } = useSocketJoin();
   const { data: session } = useSession();
-  const { socket, isConnected, socketConnect, socketDisconnect } = useSocket();
-  const { setRoom, resetRoom } = useRoomStore();
+  const { resetRoom } = useRoomStore();
+  const { socketDisconnect } = useSocket();
 
   useEffect(() => {
     leftAfterJoinSuccessRef.current = false;
@@ -64,79 +63,66 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
     };
   }, [resetRoom, socketDisconnect]);
 
-  const handleJoinRoom = useCallback(() => {
-    if (!roomId || !session?.user?.email) return;
-    if (!isConnected) {
-      socketConnect();
-    }
-    const { playerName } = joinRoomFormData;
-    const payload: RoomJoinPayload = {
-      roomId: roomId,
-      playerName: playerName,
-      playerEmail: session.user.email,
-    }
-    socket?.emit("room:join", payload)
-      .on("room-join-failed", (response: RoomJoinResponse) => {
-        const { message } = response;
-        switch (message) {
-          case "Room not found!":
-            setJoinRoomError({ ...joinRoomError, generalError: "Room not found" });
-            break;
-          case "Room is full!":
-            setJoinRoomError({ ...joinRoomError, generalError: "Room is full!" });
-            break;
-          case "Player already in another room!":
-            setJoinRoomError({ ...joinRoomError, generalError: "Player already in another room!" });
-            break;
-          default:
-            setJoinRoomError({ ...joinRoomError, generalError: "An error occurred while joining the room" });
-            break;
-        }
-      })
-      .on("room-join-success", (response: RoomJoinResponse) => {
-        const { data } = response;
-        setRoom(data);
-        setJoinRoomFormData({
-          playerName: "",
-        });
-        setJoinRoomModalOpen(false);
-        leftAfterJoinSuccessRef.current = true;
-        router.push(`/play/${roomId}`);
-      });
-  }, [session, isConnected, joinRoomFormData, joinRoomError, roomId, socket, socketConnect, router, setRoom]);
-  
+  const { data: roomData, isLoading: isLoadingRoom, error: roomError } = useQuery({
+    queryKey: ['FETCH_ROOM', roomId],
+    queryFn: () => fetchRoom(roomId),
+    enabled: !!roomId,
+    retry: 3,
+  });
+
   const formValidation = useCallback(() => {
-    setJoinRoomError(null);
-    const errors: JoinRoomError = {};
+    let errors: string = "";
     const { playerName } = joinRoomFormData;
     if (!playerName || playerName.trim() === "") {
-      errors.playerName = "Player name is required";
+      errors = "Player name is required";
     } else if (playerName.length < 3) {
-      errors.playerName = "Player name must be at least 3 characters long";
+      errors = "Player name must be at least 3 characters long";
     }
-    setJoinRoomError(errors);
-    if (Object.keys(errors).length > 0) return;
-    handleJoinRoom();
-  }, [joinRoomFormData, handleJoinRoom]);
+    setFormError(errors);
+    if (errors) return;
+    joinRoom(roomId, session?.user?.email || "", joinRoomFormData.playerName);
+  }, [joinRoomFormData, session, roomId, joinRoom]);
 
   return (
     <Container>
       <div className="flex flex-col items-center justify-center w-full h-full">
-        <div className="flex flex-col items-center gap-2 justify-center bg-white rounded-lg shadow-md p-4">
-          {!session ? (
-            <>
-              <h2 className="text-2xl font-bold">Join Room</h2>
-              <p className="text-sm text-gray-500">Please login to join the room</p>
-              <GoogleLoginBtn />
-            </>
+        <div className="flex flex-col items-center gap-2 bg-white rounded-lg shadow-md w-full max-w-md p-4">
+          {isLoadingRoom ? (
+            <div className="flex flex-col items-center gap-2 justify-center w-full">
+              <p className="text-sm text-gray-500 animate-pulse">Loading room data...</p>
+            </div>
+          ) : roomError ? (
+            <div className="flex flex-col items-center gap-2 justify-center w-full">
+              {(() => {
+                const errorData = JSON.parse(roomError.message) as ErrorResponse;
+                return <p className="text-red-500">{errorData.message}</p>
+              })()}
+            </div>
           ) : (
             <>
-              <h2 className="text-2xl font-bold">Join Room</h2>
-              <p className="text-sm text-gray-500">Hello {session.user?.name}</p>
-              <p className="text-sm text-gray-500">Room ID: {roomId}</p>
-              <Button variant="success" onClick={() => setJoinRoomModalOpen(true)}>
-                Join Room
-              </Button>
+              <h2 className="text-2xl font-bold w=full">Join Room</h2>
+              {roomData as RoomResponseData && (
+                <div className="flex flex-col gap-2 w-full">
+                  <p className="text-sm text-gray-500">Room ID: {(roomData as RoomResponseData)?.roomId}</p>
+                  <p className="text-sm text-gray-500">Creator: {(roomData as RoomResponseData)?.creatorName}</p>
+                  <p className="text-sm text-gray-500">
+                    Room Max Players: {(roomData as RoomResponseData)?.roomPlayers.length } / {(roomData as RoomResponseData)?.roomMaxPlayers}
+                    <LabelPill label={(roomData as RoomResponseData)?.gameRule.status} variant={(roomData as RoomResponseData)?.gameRule.status === "waiting" ? "warning" : (roomData as RoomResponseData)?.gameRule.status === "ready" ? "success" : (roomData as RoomResponseData)?.gameRule.status === "playing" ? "danger" : "neutral"} className="ml-2" />
+                  </p>
+                  {!session ? (
+                    <>
+                      <p className="text-xs text-gray-500">Please login to join the room</p>
+                    </>
+                  ) : (
+                    <>
+                      {joinRoomError && <p className="text-red-500">{joinRoomError}</p>}
+                      <Input placeholder="Player Name" value={joinRoomFormData.playerName} onChange={(e) => setJoinRoomFormData({ ...joinRoomFormData, playerName: e.target.value })} error={formError} />
+                      <Button variant="secondary" onClick={formValidation}>Join Room</Button>
+                    </>
+                  )}
+                  <GoogleLoginBtn />
+                </div>
+              )}
             </>
           )}
         </div>
@@ -144,8 +130,8 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
       <Modal isOpen={joinRoomModalOpen} onClose={() => setJoinRoomModalOpen(false)}>
         <div className="flex flex-col gap-4">
           <h2 className="text-2xl font-bold">Join Room</h2>
-          {joinRoomError?.generalError && <p className="text-red-500">{joinRoomError.generalError}</p>}
-          <Input placeholder="Player Name" value={joinRoomFormData.playerName} onChange={(e) => setJoinRoomFormData({ ...joinRoomFormData, playerName: e.target.value })} error={joinRoomError?.playerName} />
+          {joinRoomError && <p className="text-red-500">{joinRoomError}</p>}
+          <Input placeholder="Player Name" value={joinRoomFormData.playerName} onChange={(e) => setJoinRoomFormData({ ...joinRoomFormData, playerName: e.target.value })} error={formError} />
           <Button variant="secondary" onClick={formValidation}>Join Room</Button>
         </div>
       </Modal>

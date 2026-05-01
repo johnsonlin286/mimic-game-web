@@ -208,7 +208,7 @@ export default function VoteBoard() {
   return (
     <>
       {isHost && <Button variant="primary" size="md" onClick={voteRequest}>Vote Board</Button>}
-      <Modal isOpen={voteModal} dismissible={isHost ? true : false} onClose={() => setVoteModal(false)}>
+      <Modal isOpen={voteModal} dismissible={false} onClose={() => setVoteModal(false)}>
         <div className="flex flex-col gap-4">
           <h2 className="text-2xl font-bold">
             {!winStatus ? "Vote Board" : "Game Results"}
@@ -242,7 +242,10 @@ export default function VoteBoard() {
                   ))}
                 </ol>
                 {isHost && (
+                  <>
                   <Button variant="danger" size="md" disabled={!allVoted} onClick={submitVote} className="w-full">Calculate Vote</Button>
+                  <Button variant="secondary" size="md" onClick={voteRequest} className="w-full">Reload Vote</Button>
+                  </>
                 )}
               </>
             ) : winStatus !== null && winStatus !== "none" ? (

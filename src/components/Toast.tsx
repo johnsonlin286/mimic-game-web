@@ -26,7 +26,7 @@ export default function Toast() {
   if (!show) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-40">
+    <div className="fixed bottom-4 right-4 z-50">
       <div className={`${typeClasses} rounded-lg p-4 shadow-lg`}>
         <p className="text-white text-sm">
           {message}

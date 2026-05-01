@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import MainWarper from "@/components/MainWarper";
-import Navbar from "@/components/Navbar";
 import Toast from "@/components/Toast";
 
 import "./tailwind.css";
@@ -34,7 +33,6 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <MainWarper>
-          <Navbar />
           <Toast />
           {children}
         </MainWarper>

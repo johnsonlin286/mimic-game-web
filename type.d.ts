@@ -222,3 +222,9 @@ interface GameVoidGuessTheWordIncorrectlyResponse {
     room: RoomResponseData;
   };
 }
+
+interface ErrorResponse {
+  success: boolean;
+  message: string;
+  data?: unknown;
+}

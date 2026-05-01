@@ -1,150 +1,55 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 
 import { FETCH_ALL_ROOMS } from "@/services/const";
 import { fetchAllRooms } from "@/services/rooms";
-import { useRoomStore } from "@/store/room-state";
 import { useToastStore } from "@/store/toast-state";
-import useSocket from "@/hooks/useSocket";
 import Container from "@/components/Container";
 import Panel from "@/components/Panel";
 import LabelPill from "@/components/LabelPill";
-import Modal from "@/components/Modal";
-import Input from "@/components/Input";
-import SwitchInput from "@/components/SwitchInput";
 import Button from "@/components/Button";
 
-interface CreateRoomFormData {
-  playerName: string;
-  roomMaxPlayers: number;
-  isPublic: boolean;
-}
-
-interface CreateRoomError {
-  playerName?: string;
-  roomMaxPlayers?: string;
-  generalError?: string;
-}
+import ModalCreate from "@/components/Home/ModalCreate";
+import ModalSearch from "@/components/Home/ModalSearch";
 
 export default function Home() {
   const router = useRouter();
   const [createRoomModalOpen, setCreateRoomModalOpen] = useState(false);
-  const [createRoomFormData, setCreateRoomFormData] = useState<CreateRoomFormData>({
-    playerName: "",
-    roomMaxPlayers: 3,
-    isPublic: true,
-  });
-  const [createRoomError, setCreateRoomError] = useState<CreateRoomError | null>(null);
-  const { data: session } = useSession();
-  const { socket, isConnected, socketConnect, socketDisconnect } = useSocket();
-  const { setRoom } = useRoomStore();
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
   const { setToast } = useToastStore();
+  const { data: session } = useSession();
   const { data: allRooms } = useQuery({
     queryKey: [FETCH_ALL_ROOMS],
     queryFn: fetchAllRooms,
     refetchInterval: 5000,
   });
 
-  useEffect(() => {
-    if (!session) return;
-    setCreateRoomFormData((prev) => ({
-      ...prev,
-      playerName: session.user?.name || "",
-    }));
-  }, [session]);
-
   const openCreateRoomModal = useCallback(() => {
-    if (!session) return;
+    if (!session) {
+      setToast("Please login to create a room", "warning");
+      return;
+    }
     setCreateRoomModalOpen(true);
-  }, [session]);
+  }, [session, setToast]);
 
-  const handleCreateRoom = useCallback(() => {
-    if (!session?.user?.email) return;
-    if (!isConnected) {
-      socketConnect();
+  const openSearchModal = useCallback(() => {
+    if (!session) {
+      setToast("Please login to join a room", "warning");
+      return;
     }
-    const { playerName, roomMaxPlayers, isPublic } = createRoomFormData;
-    setCreateRoomError(null);
-    const payload: RoomCreatePayload = {
-      playerName: playerName,
-      creatorEmail: session.user.email,
-      roomMaxPlayers: roomMaxPlayers,
-      isPublic: isPublic,
-    }
-    socket?.emit("room:create", payload)
-      .on("room-created", (response: RoomCreateResponse) => {
-        const { data } = response;
-        // console.log("room-created", data);
-        setToast(`Room ${data.roomId} created`, "success");
-        setRoom({
-          roomId: data.roomId,
-          creatorName: data.creatorName,
-          roomMaxPlayers: data.roomMaxPlayers,
-          roomPlayers: data.roomPlayers,
-          gameRule: data.gameRule,
-          isPublic: data.isPublic,
-          createdAt: data.createdAt,
-          updatedAt: data.updatedAt,
-        } as RoomResponseData);
-        setCreateRoomFormData({
-          playerName: "",
-          roomMaxPlayers: 3,
-          isPublic: true,
-        });
-        setCreateRoomModalOpen(false);
-        router.push(`/play/${data.roomId}`);
-      })
-      .on("room-create-failed", (response: RoomCreateResponse) => {
-        const { message } = response;
-        switch (message) {
-          case "Creator email is required!":
-            setCreateRoomError({ ...createRoomError, generalError: "Creator email is required!" });
-            break;
-          case "Creator email already exists!":
-            setCreateRoomError({ ...createRoomError, generalError: "Creator email already exists!" });
-            break;
-          case "Room max players is required!":
-            setCreateRoomError({ ...createRoomError, roomMaxPlayers: "Room max players is required!" });
-            break;
-          case "Room max players must be between 3 and 10!":
-            setCreateRoomError({ ...createRoomError, roomMaxPlayers: "Room max players must be between 3 and 10!" });
-            break;
-          default:
-            setCreateRoomError({ ...createRoomError, generalError: "An error occurred while creating the room" });
-            break;
-        }
-        socketDisconnect();
-      });
-  }, [session, isConnected, createRoomFormData, createRoomError, socket, socketConnect, socketDisconnect, setRoom, router, setToast]);
-
-  const formValidation = useCallback(() => {
-    setCreateRoomError(null);
-    const errors: CreateRoomError = {};
-    const { playerName, roomMaxPlayers } = createRoomFormData;
-    if (!playerName || playerName.trim() === "") {
-      errors.playerName = "Player name is required";
-    } else if (playerName.length < 3) {
-      errors.playerName = "Player name must be at least 3 characters long";
-    }
-    if (!roomMaxPlayers || roomMaxPlayers < 3 || roomMaxPlayers > 10) {
-      errors.roomMaxPlayers = "Room max players must be between 3 and 10";
-    }
-    setCreateRoomError(errors);
-    if (Object.keys(errors).length > 0) return;
-    handleCreateRoom();
-  }, [createRoomFormData, handleCreateRoom]);
+    setSearchModalOpen(true);
+  }, [session, setToast]);
 
   return (
     <Container className="flex flex-col gap-4 py-5">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl text-white font-bold">Home Page</h1>
+      <div className="justify-end flex gap-2">
         <Button variant="secondary" onClick={openCreateRoomModal}>Create Room</Button>
+        <Button variant="success" onClick={openSearchModal}>Join Room</Button>
       </div>
-      {/* <pre className="text-white text-xs">{JSON.stringify(allRooms, null, 2)}</pre> */}
       {allRooms?.map((room, index) => (
         <Panel key={index} title={`Room ${index + 1}`}>
           <div className="flex justify-between items-center gap-2">
@@ -157,16 +62,22 @@ export default function Home() {
           </div>
         </Panel>
       ))}
-      <Modal isOpen={createRoomModalOpen} onClose={() => setCreateRoomModalOpen(false)}>
-        <div className="flex flex-col gap-4">
-          <h2 className="text-2xl font-bold">Create Room</h2>
-          {createRoomError?.generalError && <p className="text-red-500">{createRoomError.generalError}</p>}
-          <Input type="text" label="Player Name" placeholder="Player Name" value={createRoomFormData.playerName} onChange={(e) => setCreateRoomFormData({ ...createRoomFormData, playerName: e.target.value.toLowerCase() })} error={createRoomError?.playerName} />
-          <Input type="number" label="Max Players" placeholder="Max Players" min={3} max={10} value={createRoomFormData.roomMaxPlayers} onChange={(e) => setCreateRoomFormData({ ...createRoomFormData, roomMaxPlayers: parseInt(e.target.value) > 0 ? parseInt(e.target.value) : 3 })} error={createRoomError?.roomMaxPlayers} />
-          <SwitchInput label="Public" checked={createRoomFormData.isPublic} onCheckedChange={(checked) => setCreateRoomFormData({ ...createRoomFormData, isPublic: checked })} className="w-fit" />
-          <Button onClick={formValidation}>Create Room</Button>
-        </div>
-      </Modal>
+      {session && (
+        <>
+          <ModalCreate
+            isOpen={createRoomModalOpen}
+            onClose={() => setCreateRoomModalOpen(false)}
+            playerName={session.user?.name || ""}
+            playerEmail={session.user?.email || ""}
+          />
+          <ModalSearch
+            isOpen={searchModalOpen}
+            onClose={() => setSearchModalOpen(false)}
+            playerName={session.user?.name || ""}
+            playerEmail={session.user?.email || ""}
+          />
+        </>
+      )}
     </Container>
   );
 }

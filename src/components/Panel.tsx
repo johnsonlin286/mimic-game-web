@@ -28,7 +28,7 @@ export default function Panel({ collapsible = false, collapsed = false, title, c
           {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
         </div>
       )}
-      <div className={`${isCollapsed ? 'hidden' : ''} ${collapsible ? 'border-t border-zinc-200' : ''} p-4`}>
+      <div className={`${isCollapsed ? 'hidden ' : ''}${collapsible ? 'border-t border-zinc-200 ' : ''}p-4`}>
         {children}
       </div>
     </div>

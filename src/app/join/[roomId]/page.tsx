@@ -1,13 +1,10 @@
 "use client";
 
 import { use, useState, useEffect, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query"; 
 import { useSession } from "next-auth/react";
 
-import { useRoomStore } from "@/store/room-state";
 import { fetchRoom } from "@/services/rooms";
-import useSocket from "@/hooks/useSocket";
 import useSocketJoin from "@/hooks/useSocketJoin";
 import Container from "@/components/Container";
 import GoogleLoginBtn from "@/components/GoogleLoginBtn";
@@ -20,11 +17,7 @@ interface JoinRoomFormData {
   playerName: string;
 }
 
-let pendingDisconnectTimer: ReturnType<typeof setTimeout> | null = null;
-
 export default function JoinPage({ params }: { params: Promise<{ roomId: string }> }) {
-  const router = useRouter();
-  const leftAfterJoinSuccessRef = useRef(false);
   const { roomId } = use(params);
   const [joinRoomModalOpen, setJoinRoomModalOpen] = useState(false);
   const [joinRoomFormData, setJoinRoomFormData] = useState<JoinRoomFormData>({
@@ -33,12 +26,6 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
   const [formError, setFormError] = useState<string | undefined>();
   const { joinRoom, joinRoomError } = useSocketJoin();
   const { data: session } = useSession();
-  const { resetRoom } = useRoomStore();
-  const { socketDisconnect } = useSocket();
-
-  useEffect(() => {
-    leftAfterJoinSuccessRef.current = false;
-  }, [roomId]);
 
   useEffect(() => {
     if (!session) return;
@@ -47,21 +34,6 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
       playerName: session.user?.name || "",
     }));
   }, [session]);
-
-  useEffect(() => {
-    if (pendingDisconnectTimer) {
-      clearTimeout(pendingDisconnectTimer);
-      pendingDisconnectTimer = null;
-    }
-
-    return () => {
-      pendingDisconnectTimer = setTimeout(() => {
-        if (leftAfterJoinSuccessRef.current) return;
-        resetRoom();
-        socketDisconnect();
-      }, 100);
-    };
-  }, [resetRoom, socketDisconnect]);
 
   const { data: roomData, isLoading: isLoadingRoom, error: roomError } = useQuery({
     queryKey: ['FETCH_ROOM', roomId],
@@ -103,12 +75,13 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
               <h2 className="text-2xl font-bold w=full">Join Room</h2>
               {roomData as RoomResponseData && (
                 <div className="flex flex-col gap-2 w-full">
-                  <p className="text-sm text-gray-500">Room ID: {(roomData as RoomResponseData)?.roomId}</p>
-                  <p className="text-sm text-gray-500">Creator: {(roomData as RoomResponseData)?.creatorName}</p>
+                  <p className="text-sm text-gray-500">room ID: {(roomData as RoomResponseData)?.roomId}</p>
+                  <p className="text-sm text-gray-500">creator: {(roomData as RoomResponseData)?.creatorName}</p>
                   <p className="text-sm text-gray-500">
-                    Room Max Players: {(roomData as RoomResponseData)?.roomPlayers.length } / {(roomData as RoomResponseData)?.roomMaxPlayers}
+                    max: {(roomData as RoomResponseData)?.roomPlayers.length } / {(roomData as RoomResponseData)?.roomMaxPlayers}
                     <LabelPill label={(roomData as RoomResponseData)?.gameRule.status} variant={(roomData as RoomResponseData)?.gameRule.status === "waiting" ? "warning" : (roomData as RoomResponseData)?.gameRule.status === "ready" ? "success" : (roomData as RoomResponseData)?.gameRule.status === "playing" ? "danger" : "neutral"} className="ml-2" />
                   </p>
+                  <p className="text-sm text-gray-500">mode: {(roomData as RoomResponseData)?.isPublic ? "public" : "offline"}</p>
                   {!session ? (
                     <>
                       <p className="text-xs text-gray-500">Please login to join the room</p>
@@ -117,7 +90,7 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
                     <>
                       {joinRoomError && <p className="text-red-500">{joinRoomError}</p>}
                       <Input placeholder="Player Name" value={joinRoomFormData.playerName} onChange={(e) => setJoinRoomFormData({ ...joinRoomFormData, playerName: e.target.value })} error={formError} />
-                      <Button variant="secondary" onClick={formValidation}>Join Room</Button>
+                      <Button variant="success" onClick={formValidation}>Join Room</Button>
                     </>
                   )}
                   <GoogleLoginBtn />
@@ -132,7 +105,7 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
           <h2 className="text-2xl font-bold">Join Room</h2>
           {joinRoomError && <p className="text-red-500">{joinRoomError}</p>}
           <Input placeholder="Player Name" value={joinRoomFormData.playerName} onChange={(e) => setJoinRoomFormData({ ...joinRoomFormData, playerName: e.target.value })} error={formError} />
-          <Button variant="secondary" onClick={formValidation}>Join Room</Button>
+          <Button variant="success" onClick={formValidation}>Join Room</Button>
         </div>
       </Modal>
     </Container>

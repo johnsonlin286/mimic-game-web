@@ -10,9 +10,10 @@ export const useRoomStore = create<RoomState>()(
       roomPlayers: [],
       gameRule: {
         roles: {
-          mimic: true,
-          void: false,
+          minority: true,
+          blind: false,
         },
+        superpowers: false,
         category: "",
         language: "en",
         status: "waiting",

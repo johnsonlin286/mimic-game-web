@@ -7,12 +7,19 @@ interface RoomCreatePayload {
 
 interface GameRule {
   roles: {
-    mimic: boolean;
-    void: boolean;
+    minority: boolean;
+    blind: boolean;
   }
+  superpowers: boolean;
   category: string;
   language: string;
   status: "waiting" | "ready" | "playing" | "finished";
+}
+
+interface Superpower {
+  name: string;
+  type: string;
+  description: string;
 }
 
 interface PlayerWithRole {
@@ -21,6 +28,7 @@ interface PlayerWithRole {
   playerEmail: string;
   gameRole: string;
   gameWord?: string | null;
+  superpower?: Superpower | null;
   voters?: Partial<PlayerWithRole>[];
   isAlive: boolean;
 }
@@ -28,8 +36,8 @@ interface PlayerWithRole {
 interface GameData {
   players: PlayerWithRole[];
   wordPairList: {
-    originalWord: string;
-    mimicWord: string;
+    majorityWord: string;
+    minorityWord: string;
   }[];
 }
 
@@ -214,7 +222,7 @@ interface GameStartErrorResponse {
   message: string;
 }
 
-interface GameVoidGuessTheWordIncorrectlyResponse {
+interface GameBlindGuessTheWordIncorrectlyResponse {
   success: boolean;
   message: string;
   data: {

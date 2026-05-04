@@ -20,9 +20,10 @@ export default function PlayGameSetup({ isHost }: PlayGameSetupProps) {
   const [gameSetupModal, setGameSetupModal] = useState(false);
   const [setupFormData, setSetupFormData] = useState<Partial<GameRule>>({
     roles: {
-      mimic: true,
-      void: false,
+      minority: true,
+      blind: false,
     },
+    superpowers: false,
     category: "",
     language: "en",
   });
@@ -33,7 +34,7 @@ export default function PlayGameSetup({ isHost }: PlayGameSetupProps) {
     if (!socket) return;
     
     socket.on("listen-game-rule-update-success", (response: GameRuleUpdateResponse) => {
-      console.log("listen game-rule-update-success", response);
+      console.log(response)
       setRoom(response.data as RoomResponseData);
     });
   }, [socket, setRoom]);
@@ -50,8 +51,8 @@ export default function PlayGameSetup({ isHost }: PlayGameSetupProps) {
         setSetupFormData((prev) => ({
           ...prev,
           roles: {
-            mimic: setupFormData.roles?.mimic as boolean,
-            void: (value as { void: boolean }).void,
+            minority: setupFormData.roles?.minority as boolean,
+            blind: (value as { blind: boolean }).blind,
           },
         }));
         break;
@@ -65,6 +66,12 @@ export default function PlayGameSetup({ isHost }: PlayGameSetupProps) {
         setSetupFormData((prev) => ({
           ...prev,
           category: value as string,
+        }));
+        break;
+      case "superpowers":
+        setSetupFormData((prev) => ({
+          ...prev,
+          superpowers: value as boolean,
         }));
         break;
       default:
@@ -94,9 +101,9 @@ export default function PlayGameSetup({ isHost }: PlayGameSetupProps) {
       <Panel collapsible title="Game Setup" className="flex flex-col">
         <div className="flex justify-between items-start gap-4">
           <div className="flex flex-col">
-            <p className={`flex items-center gap-2 ${gameRule.roles?.mimic ? "opacity-100" : "opacity-30"}`}>
+            <p className={`flex items-center gap-2 ${gameRule.roles?.minority ? "opacity-100" : "opacity-30"}`}>
               <strong>
-                The Mimic:
+                The Minority:
               </strong>
               <strong>
                 {(() => {
@@ -107,9 +114,9 @@ export default function PlayGameSetup({ isHost }: PlayGameSetupProps) {
                 })()}
               </strong>
             </p>
-            <p className={`flex items-center gap-2 ${gameRule.roles?.void ? "opacity-100" : "opacity-20"}`}>
+            <p className={`flex items-center gap-2 ${gameRule.roles?.blind ? "opacity-100" : "opacity-20"}`}>
               <strong>
-                The Void:
+                The Blind:
               </strong>
               <strong>
                 {(() => {
@@ -118,6 +125,14 @@ export default function PlayGameSetup({ isHost }: PlayGameSetupProps) {
                   if (n >= 11) return "2";
                   return "0";
                 })()}
+              </strong>
+            </p>
+            <p className="flex items-center gap-2">
+              <strong>
+                Superpower:
+              </strong>
+              <strong>
+                {gameRule.superpowers ? "Yes" : "No"}
               </strong>
             </p>
             <p className="flex items-center gap-2">
@@ -151,10 +166,11 @@ export default function PlayGameSetup({ isHost }: PlayGameSetupProps) {
         <div className="flex flex-col gap-4">
           <h2 className="text-2xl font-bold">Game Setup</h2>
           <div className="flex flex-col gap-1">
-            <SwitchInput label="The Mimic" checked={gameRule.roles.mimic || false} disabled onCheckedChange={(value) => handleSetupFormChange("roles", { mimic: value })} />
-            <small className="text-zinc-500">The Mimic is who get different word than other players.</small>
-            <SwitchInput label="The Void" checked={gameRule.roles.void || false} disabled={roomPlayers?.length && roomPlayers?.length < 5 ? true : false} onCheckedChange={(value) => handleSetupFormChange("roles", { void: value })} />
-            <small className="text-zinc-500">The Void is who not get any word.</small>
+            <SwitchInput id="minority" labelLeft="The Minority" checked={setupFormData.roles?.minority || false} disabled onCheckedChange={(value) => handleSetupFormChange("roles", { minority: value })} />
+            <small className="text-zinc-500">The Minority is who get different word than other players.</small>
+            <SwitchInput id="blind" labelLeft="The Blind" checked={setupFormData.roles?.blind || false} disabled={roomPlayers?.length && roomPlayers?.length < 5 ? true : false} onCheckedChange={(value) => handleSetupFormChange("roles", { blind: value })} />
+            <small className="text-zinc-500">The Blind is who not get any word.</small>
+            <SwitchInput id="superpower" labelLeft="Superpower" checked={setupFormData.superpowers || false} /*disabled={roomPlayers?.length && roomPlayers?.length < 5 ? true : false}*/ onCheckedChange={(value) => handleSetupFormChange("superpowers", value)} />
           </div>
           <SelectLanguages socket={socket} value={setupFormData?.language} onChange={(value) => handleSetupFormChange("language", value)} />
           <h3 className="text-lg font-bold">Categories</h3>

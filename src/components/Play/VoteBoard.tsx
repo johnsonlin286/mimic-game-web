@@ -47,17 +47,17 @@ export default function VoteBoard() {
       console.log("listen-game-calculate-results", response);
       const { message, data } = response;
       switch (message) {
-        case "Mimic is the winner":
-          setWinStatus("mimic");
+        case "Minority is the winner":
+          setWinStatus("minority");
           break;
-        case "Void is the winner":
-          setWinStatus("void");
+        case "Blind is the winner":
+          setWinStatus("blind");
           break;
-        case "Original is the winner":
-          setWinStatus("original");
+        case "Majority is the winner":
+          setWinStatus("majority");
           break;
-        case "Void got caught!":
-          setWinStatus("void-caught");
+        case "Blind got caught!":
+          setWinStatus("blind-caught");
           break;
         default:
           setWinStatus("none");
@@ -66,28 +66,28 @@ export default function VoteBoard() {
       setRoom(data);
     })
 
-    socket.on("listen-game-void-got-caught", () => {
-      console.log("listen-game-void-got-caught");
+    socket.on("listen-game-blind-got-caught", () => {
+      console.log("listen-game-blind-got-caught");
       setGuessWordModal(true);
     })
 
-    socket.on("listen-game-void-guess-the-word-correctly", () => {
-      console.log("listen-game-void-guess-the-word-correctly");
+    socket.on("listen-game-blind-guess-the-word-correctly", () => {
+      console.log("listen-game-blind-guess-the-word-correctly");
       setGuessWordModal(false);
-      setWinStatus("void");
+      setWinStatus("blind");
     })
 
-    socket.on("listen-game-void-guess-the-word-incorrectly", (response: GameVoidGuessTheWordIncorrectlyResponse) => {
+    socket.on("listen-game-blind-guess-the-word-incorrectly", (response: GameBlindGuessTheWordIncorrectlyResponse) => {
       const { outcomeMessage, room } = response.data;
       switch (outcomeMessage) {
-        case "Original is the winner":
-          setWinStatus("original");
+        case "Majority is the winner":
+          setWinStatus("majority");
           break;
-        case "Void is the winner":
-          setWinStatus("void");
+        case "Blind is the winner":
+          setWinStatus("blind");
           break;
-        case "Mimic is the winner":
-          setWinStatus("mimic");
+        case "Minority is the winner":
+          setWinStatus("minority");
           break;
         default:
           setWinStatus("none");
@@ -165,7 +165,7 @@ export default function VoteBoard() {
     if (guessWord.length < 3) {
       return;
     }
-    socket.emit("game:void-guess-the-word", {
+    socket.emit("game:blind-guess-the-word", {
       roomId,
       playerEmail: session.user.email,
       guessWord: guessWord.toLowerCase(),
@@ -250,9 +250,9 @@ export default function VoteBoard() {
               </>
             ) : winStatus !== null && winStatus !== "none" ? (
               <>
-                {winStatus === "void-caught" ? (
+                {winStatus === "blind-caught" ? (
                   <p className="text-lg text-center font-bold">
-                    The void got caught!
+                    The blind got caught!
                   </p>
                 ) : (
                   <>
@@ -261,9 +261,9 @@ export default function VoteBoard() {
                       {' '}
                       <span className="capitalize">{winStatus}!</span>
                       <br/>
-                      <strong>The word was: {gameData?.wordPairList[0].originalWord}</strong>
+                      <strong>The majority word was: {gameData?.wordPairList[0].majorityWord}</strong>
                       <br/>
-                      <strong>The mimic word was: {gameData?.wordPairList[0].mimicWord}</strong>
+                      <strong>The minority word was: {gameData?.wordPairList[0].minorityWord}</strong>
                     </p>
                     {isHost && (
                       <div className="flex justify-between gap-2">

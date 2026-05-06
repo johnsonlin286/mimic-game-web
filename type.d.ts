@@ -20,6 +20,7 @@ interface Superpower {
   name: string;
   type: string;
   description: string;
+  isUsed: boolean;
 }
 
 interface PlayerWithRole {
@@ -27,8 +28,6 @@ interface PlayerWithRole {
   playerName: string;
   playerEmail: string;
   gameRole: string;
-  gameWord?: string | null;
-  superpower?: Superpower | null;
   voters?: Partial<PlayerWithRole>[];
   isAlive: boolean;
 }

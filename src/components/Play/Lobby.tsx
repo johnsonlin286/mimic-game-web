@@ -22,8 +22,8 @@ export default function PlayLobby() {
       roomId,
       playerEmail: session.user.email,
     }).on("game-start-failed", (response: GameStartErrorResponse) => {
-      // console.log("game-start-failed", response);
-      setToast(response.message, "error");
+      console.log("game-start-failed", response);
+      // setToast(response.message, "error");
     }).on("initialize-game", () => {
       // console.log("initialize-game");
       socket.emit("game:initialize", {

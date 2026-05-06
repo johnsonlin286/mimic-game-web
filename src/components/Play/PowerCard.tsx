@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 
 import { useLongPress } from "@uidotdev/usehooks";
@@ -16,6 +16,17 @@ export default function PowerCard({ power }: PowerCardProps) {
   const { data: session } = useSession();
   const { socket } = useSocket();
   const { roomId } = useRoomStore();
+
+  useEffect(() => {
+    if (!socket) return;
+    socket.on("listen-game-restart-success", () => {
+      setIsFlipped(true);
+    })
+
+    socket.on("listen-game-initialize-success", () => {
+      setIsFlipped(true);
+    })
+  }, [socket])
 
   const attrs = useLongPress(() => {
     setIsFlipped(!isFlipped);
@@ -55,8 +66,8 @@ export default function PowerCard({ power }: PowerCardProps) {
               <p className="text-sm text-zinc-500 text-center">{power.description}</p>
             </div>
             {power.type === 'active' && (
-              <Button variant="primary" size="sm" onClick={() => handleUsePower(power.name)} className="w-full self-end">
-                Use Power
+              <Button variant="primary" size="sm" disabled={power.isUsed} onClick={() => handleUsePower(power.name)} className="w-full self-end">
+                {power.isUsed ? "Power Used" : "Use Power"}
               </Button>
             )}
           </div>

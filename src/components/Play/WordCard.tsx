@@ -18,9 +18,6 @@ export default function WordCard({ label, word, orientation = "portrait", onFlip
       setIsFlipped(!isFlipped);
       onFlip?.();
     },
-    onCancel: () => {
-      onFlip?.();
-    },
   });
 
   return (

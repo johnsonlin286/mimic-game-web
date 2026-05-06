@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { CircleCheck } from "lucide-react";
+import { CircleCheck, Sword } from "lucide-react";
 
 import { useRoomStore } from "@/store/room-state";
 import useSocket from "@/hooks/useSocket";
 import Button from "@/components/Button";
 import Modal from "@/components/Modal";
 import Input from "../Input";
+import RestartBtn from "@/components/Play/RestartBtn";
 
 export default function VoteBoard() {
   const [voteModal, setVoteModal] = useState(false);
@@ -14,6 +15,7 @@ export default function VoteBoard() {
   const [guessWord, setGuessWord] = useState<string>("");
   const [allVoted, setAllVoted] = useState<boolean>(false);
   const [winStatus, setWinStatus] = useState<string | null>(null);
+  const [superpowerTriggered, setSuperpowerTriggered] = useState<string | null>(null);
   const { socket } = useSocket();
   const { data: session } = useSession();
   const { roomId, roomPlayers, gameData, setRoom } = useRoomStore();
@@ -59,11 +61,30 @@ export default function VoteBoard() {
         case "Blind got caught!":
           setWinStatus("blind-caught");
           break;
+        case "Saboteur is the winner":
+          setWinStatus("saboteur");
+          break;
         default:
           setWinStatus("none");
           break;
       }
       setRoom(data);
+    })
+
+    socket.on("listen-game-superpower-triggered", (response) => {
+      console.log("listen-game-superpower-triggered", response);
+      const { triggeredEffects } = response.data
+      triggeredEffects.forEach((effect: { playerEmail: string, playerName: string, power: string }) => {
+        console.log("effect", effect);
+        switch (effect.power) {
+          case "chief":
+            setSuperpowerTriggered(`Executive Override! The Chief pulled rank to break the tie.`)
+            break;
+          case "briber":
+            setSuperpowerTriggered(`Money talks! Someone was bought off. One vote disappeared.`)
+            break;
+        }
+      })
     })
 
     socket.on("listen-game-blind-got-caught", () => {
@@ -105,26 +126,29 @@ export default function VoteBoard() {
       setAllVoted(false);
       setWinStatus(null);
       setGuessWord("");
+      setSuperpowerTriggered(null);
     })
 
     socket.on("listen-game-restart-success", (response) => {
-      console.log("listen game-restart-success", response);
+      // console.log("listen game-restart-success", response);
       setRoom(response.data);
       setVoteModal(false);
       setGuessWordModal(false);
       setAllVoted(false);
       setWinStatus(null);
       setGuessWord("");
+      setSuperpowerTriggered(null);
     })
 
     socket.on("listen-game-initialize-success", (response) => {
-      console.log("listen game-initialize-success", response);
+      // console.log("listen game-initialize-success", response);
       setRoom(response.data);
       setVoteModal(false);
       setGuessWordModal(false);
       setAllVoted(false);
       setWinStatus(null);
       setGuessWord("");
+      setSuperpowerTriggered(null);
     })
   }, [socket, setRoom, gameData, session]);
 
@@ -183,18 +207,6 @@ export default function VoteBoard() {
     });
   }, [socket, roomId, session])
 
-  // restart the game, change game status to ready
-  const restartGame = useCallback(() => {
-    if (!session?.user?.email || !socket || !roomId) return;
-    console.log("restartGame", session.user.email, roomId);
-    socket.emit("game:restart", {
-      playerEmail: session.user.email,
-      roomId,
-    }).on("game-restart-failed", (response) => {
-      console.log("game-restart-failed", response);
-    });
-  }, [socket, roomId, session])
-
   // replay the game using the same game rules
   const replayGame = useCallback(() => {
     console.log("replayGame");
@@ -243,8 +255,8 @@ export default function VoteBoard() {
                 </ol>
                 {isHost && (
                   <>
-                  <Button variant="danger" size="md" disabled={!allVoted} onClick={submitVote} className="w-full">Calculate Vote</Button>
-                  <Button variant="secondary" size="md" onClick={voteRequest} className="w-full">Reload Vote</Button>
+                    <Button variant="danger" size="md" disabled={!allVoted} onClick={submitVote} className="w-full">Calculate Vote</Button>
+                    <Button variant="secondary" size="md" onClick={voteRequest} className="w-full">Reload Vote</Button>
                   </>
                 )}
               </>
@@ -260,14 +272,20 @@ export default function VoteBoard() {
                       The winner is the
                       {' '}
                       <span className="capitalize">{winStatus}!</span>
-                      <br/>
+                    </p>
+                    {superpowerTriggered && (
+                      <p className="text-center text-red-500">
+                        {superpowerTriggered}
+                      </p>
+                    )}
+                    <p className="text-sm text-zinc-500">
                       <strong>The majority word was: {gameData?.wordPairList[0].majorityWord}</strong>
-                      <br/>
+                      <br />
                       <strong>The minority word was: {gameData?.wordPairList[0].minorityWord}</strong>
                     </p>
                     {isHost && (
                       <div className="flex justify-between gap-2">
-                        <Button variant="secondary" size="md" onClick={restartGame} className="w-full">Restart</Button>
+                        <RestartBtn isHost={isHost} />
                         <Button variant="primary" size="md" onClick={replayGame} className="w-full">Replay</Button>
                       </div>
                     )}
@@ -279,6 +297,11 @@ export default function VoteBoard() {
                 <p className="text-lg text-center font-bold">
                   No winner yet!
                 </p>
+                {superpowerTriggered && (
+                  <p className="text-center text-red-500">
+                    {superpowerTriggered}
+                  </p>
+                )}
                 <p>
                   {/* show the player name who is isAlive = false */}
                   {gameData?.players?.filter((player: PlayerWithRole) => !player.isAlive).map((player: PlayerWithRole) => (

@@ -6,6 +6,7 @@ import useSocket from "@/hooks/useSocket";
 import Panel from "@/components/Panel";
 import LabelPill from "@/components/LabelPill";
 import Button from "@/components/Button";
+import RestartBtn from "@/components/Play/RestartBtn";
 import CopyInput from "@/components/CopyInput";
 
 interface PlayRoomStatusProps {
@@ -46,7 +47,10 @@ export default function PlayRoomStatus({ isHost }: PlayRoomStatusProps) {
             <LabelPill variant={gameRule.status === "waiting" ? "warning" : gameRule.status === "ready" ? "success" : gameRule.status === "playing" ? "danger" : "neutral"} className="ml-2" />
           </p>
         </div>
-        <Button variant="danger" onClick={emitLeave}>Leave Room</Button>
+        <div className="flex flex-col justify-between items-center gap-2">
+          {gameRule.status === "playing" && <RestartBtn isHost={isHost} />}
+          <Button variant="danger" onClick={emitLeave}>Leave Room</Button>
+        </div>
       </div>
       {isHost && gameRule.status === "waiting" && (
         <CopyInput label="Invite Link" value={`${process.env.NEXT_PUBLIC_BASE_URL}/join/${roomId}`} />

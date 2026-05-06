@@ -9,6 +9,8 @@ import {
   type ReactNode,
 } from "react";
 
+import useSocket from '@/hooks/useSocket';
+
 /** Horizontal distance (px) to commit a swipe. */
 const SWIPE_DISTANCE = 56;
 /** Movement before a gesture is treated as horizontal swipe (not tap / long-press). */
@@ -24,12 +26,24 @@ export default function CardStack({
   labels = ["Word", "Superpower"],
   children,
 }: CardStackProps) {
+  const { socket } = useSocket();
   const [activeIndex, setActiveIndex] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
   const dragOffsetRef = useRef(0);
   const swipeModeRef = useRef(false);
   const startRef = useRef({ x: 0, y: 0 });
   const cleanupRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    if (!socket) return;
+    socket.on("listen-game-restart-success", () => {
+      setActiveIndex(0);
+    })
+
+    socket.on("listen-game-initialize-success", () => {
+      setActiveIndex(0);
+    })
+  }, [socket]);
 
   const syncOffset = useCallback((v: number) => {
     dragOffsetRef.current = v;

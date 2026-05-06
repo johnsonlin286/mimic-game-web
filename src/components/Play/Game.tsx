@@ -25,15 +25,27 @@ export default function PlayGame() {
     if (!socket) return;
 
     socket.on("listen-game-initialized-player", (response) => {
-      console.log('listen-game-initialized-player', response)
+      // console.log('listen-game-initialized-player', response)
       setGameWord(response.data.gameWord);
       setSuperpower(response.data.superpower ?? null);
+    })
+
+    socket.on("use-superpower-interrogator", (response) => {
+      console.log('use-superpower-interrogator', response)
+      setSuperpower((prev) => ({
+        ...(prev as Superpower),
+        isUsed: true,
+      }))
     })
 
     socket.on("use-superpower-detective", (response) => {
       console.log('use-superpower-detective', response)
       setDetectiveModal(true);
       setDetectiveOptions(response.data);
+      setSuperpower((prev) => ({
+        ...(prev as Superpower),
+        isUsed: true,
+      }))
     })
 
     socket.on("listen-use-superpower-detective", (response) => {
@@ -53,8 +65,8 @@ export default function PlayGame() {
   useEffect(() => {
     const player = gameData?.players?.find((player: PlayerWithRole) => player.playerEmail === session?.user?.email);
     setPlayerData(player ?? null);
-    setGameWord(player?.gameWord ?? "");
-    setSuperpower(player?.superpower ?? null);
+    // setGameWord(player?.gameWord ?? "");
+    // setSuperpower(player?.superpower ?? null);
   }, [gameData, session])
 
   return (

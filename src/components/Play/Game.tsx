@@ -14,8 +14,8 @@ export default function PlayGame() {
   const [gameWord, setGameWord] = useState<string>("");
   const [superpower, setSuperpower] = useState<Superpower | null>(null);
   const [playerData, setPlayerData] = useState<PlayerWithRole | null>(null);
-  const [detectiveModal, setDetectiveModal] = useState<boolean>(false);
-  const [detectiveOptions, setDetectiveOptions] = useState<Partial<PlayerWithRole>[]>([]);
+  const [superpowerModal, setSuperpowerModal] = useState<boolean>(false);
+  const [superpowerOptions, setSuperpowerOptions] = useState<Partial<PlayerWithRole>[]>([]);
   const { data: session } = useSession();
   const { socket } = useSocket();
   const { gameData, setRoom } = useRoomStore();
@@ -40,8 +40,18 @@ export default function PlayGame() {
 
     socket.on("use-superpower-detective", (response) => {
       console.log('use-superpower-detective', response)
-      setDetectiveModal(true);
-      setDetectiveOptions(response.data);
+      setSuperpowerModal(true);
+      setSuperpowerOptions(response.data);
+      setSuperpower((prev) => ({
+        ...(prev as Superpower),
+        isUsed: true,
+      }))
+    })
+
+    socket.on("use-superpower-wiretapper", (response) => {
+      console.log('use-superpower-wiretapper', response)
+      setSuperpowerModal(true);
+      setSuperpowerOptions(response.data);
       setSuperpower((prev) => ({
         ...(prev as Superpower),
         isUsed: true,
@@ -80,20 +90,20 @@ export default function PlayGame() {
       <div className="flex justify-center items-center">
         <VoteBoard />
       </div>
-      <Modal isOpen={detectiveModal} onClose={() => setDetectiveModal(false)}>
+      <Modal isOpen={superpowerModal} onClose={() => setSuperpowerModal(false)}>
         <div className="flex flex-col gap-4">
-          <h2 className="text-2xl font-bold">Choose a player to investigate</h2>
+          <h2 className="text-2xl font-bold">Choose a player to wiretap</h2>
           <ul className="grid grid-cols-2 gap-2">
-            {detectiveOptions.map((player) => (
+            {superpowerOptions.map((player) => (
               <li key={player.socketId}>
                 <WordCard
                   label={player.playerName}
                   word={player.gameRole ?? ""}
                   orientation="landscape"
                   onFlip={() => {
-                    setDetectiveModal(false);
+                    setSuperpowerModal(false);
                     const timeout = setTimeout(() => {
-                      setDetectiveOptions([]);
+                      setSuperpowerOptions([]);
                       clearTimeout(timeout);
                     }, 1000);
                   }}

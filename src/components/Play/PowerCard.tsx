@@ -51,6 +51,13 @@ export default function PowerCard({ power }: PowerCardProps) {
           powerName: name,
         });
         break;
+      case "wiretapper":
+        socket.emit("superpower:use-power", {
+          roomId: roomId,
+          playerEmail: session?.user?.email,
+          powerName: name,
+        });
+        break;
       default:
         break;
     }

@@ -47,7 +47,7 @@ export default function Modal({ isOpen, onClose, dismissible = true, children }:
     <>
       <div ref={backdropRef} className="modal-backdrop in fixed inset-0 bg-black/50 z-40" />
       <div className='modal-container fixed inset-0 flex items-center justify-center m-4 z-40' onClick={(e) => backdropClickHandler(e)}>
-        <div ref={contentRef} className="modal-content in w-full max-w-md bg-white rounded-lg p-4 z-40">
+        <div ref={contentRef} className="modal-content in w-full max-w-md bg-light-navy border-4 border-black rounded-lg p-4 z-40">
           {dismissible && <button onClick={handleClose} className="absolute top-2 right-2 cursor-pointer">
             <CircleX className="w-5 h-5" />
           </button>}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { CircleCheck, Sword } from "lucide-react";
+import { CircleCheck } from "lucide-react";
 
 import { useRoomStore } from "@/store/room-state";
 import useSocket from "@/hooks/useSocket";

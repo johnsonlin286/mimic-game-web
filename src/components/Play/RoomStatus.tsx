@@ -1,13 +1,12 @@
 import { useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { CircleArrowLeft, CopyIcon } from "lucide-react";
 
 import { useRoomStore } from "@/store/room-state";
+import { useToastStore } from "@/store/toast-state";
 import useSocket from "@/hooks/useSocket";
-import Panel from "@/components/Panel";
 import LabelPill from "@/components/LabelPill";
-import Button from "@/components/Button";
 import RestartBtn from "@/components/Play/RestartBtn";
-import CopyInput from "@/components/CopyInput";
 
 interface PlayRoomStatusProps {
   isHost: boolean;
@@ -16,7 +15,13 @@ interface PlayRoomStatusProps {
 export default function PlayRoomStatus({ isHost }: PlayRoomStatusProps) {
   const router = useRouter();
   const { socket } = useSocket();
-  const { roomId, roomMaxPlayers, roomPlayers, gameRule, resetRoom } = useRoomStore();
+  const { roomId, gameRule, resetRoom } = useRoomStore();
+  const { setToast } = useToastStore();
+
+  const handleCopy = useCallback((value: string) => {
+    navigator.clipboard.writeText(`${process.env.NEXT_PUBLIC_BASE_URL}/join/${value}`);
+    setToast("Copied to clipboard", "success");
+  }, [setToast]);
 
   const emitLeave = useCallback(() => {
     if (!socket.connected || !socket.id || !roomId) return;
@@ -26,7 +31,6 @@ export default function PlayRoomStatus({ isHost }: PlayRoomStatusProps) {
     };
     socket.emit("room:leave", payload)
       .once("room-leave-success", () => {
-        // console.log("room-leave-success", response);
         resetRoom();
         router.push("/");
       })
@@ -36,25 +40,26 @@ export default function PlayRoomStatus({ isHost }: PlayRoomStatusProps) {
   }, [resetRoom, router, socket, roomId]);
 
   return (
-    <Panel collapsible title="Room Information" className="flex flex-col">
-      <div className="flex justify-between items-start">
-        <div className="flex flex-col gap-0.5">
-          <p className="text-sm text-zinc-500">
-            <strong className="font-bold">Room ID:</strong> {roomId}
-          </p>
-          <p className="text-sm text-zinc-500">
-            <strong className="font-bold">Players:</strong> {roomPlayers.length} / {roomMaxPlayers}
-            <LabelPill variant={gameRule.status === "waiting" ? "warning" : gameRule.status === "ready" ? "success" : gameRule.status === "playing" ? "danger" : "neutral"} className="ml-2" />
-          </p>
-        </div>
-        <div className="flex flex-col justify-between items-center gap-2">
-          {gameRule.status === "playing" && <RestartBtn isHost={isHost} />}
-          <Button variant="danger" onClick={emitLeave}>Leave Room</Button>
-        </div>
+    <nav className="flex justify-between items-center gap-2.5 py-2">
+      <div className="flex justify-start items-center">
+        <button className="cursor-pointer" onClick={emitLeave}>
+          <CircleArrowLeft className="w-8 h-8 text-mint hover:text-mint-hover" />
+        </button>
       </div>
-      {isHost && gameRule.status === "waiting" && (
-        <CopyInput label="Invite Link" value={`${process.env.NEXT_PUBLIC_BASE_URL}/join/${roomId}`} />
-      )}
-    </Panel>
+      <div className="flex-1 flex justify-center items-center gap-2.5">
+        <h2 className="flex items-center gap-2 font-fredoka text-2xl md:text-4xl text-white font-bold uppercase">
+          Room: {roomId}
+        </h2>
+        <button onClick={() => handleCopy(roomId)} className="cursor-pointer">
+          <CopyIcon className="w-6 h-6 text-mint hover:text-mint-hover" />
+        </button>
+        <LabelPill variant={gameRule.status === "waiting" ? "warning" : gameRule.status === "ready" ? "success" : gameRule.status === "playing" ? "danger" : "slate"} />
+      </div>
+      <div>
+        {isHost && gameRule.status === 'playing' && (
+          <RestartBtn isHost={isHost} />
+        )}
+      </div>
+    </nav>
   )
 }

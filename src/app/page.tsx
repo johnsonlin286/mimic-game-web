@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
 
 import { FETCH_ALL_ROOMS } from "@/services/const";
 import { fetchAllRooms } from "@/services/rooms";
@@ -47,15 +48,21 @@ export default function Home() {
 
   return (
     <Container className="flex flex-col gap-4 py-5">
-      <div className="flex flex-col items-center justify-center w-full h-full">
+      <div className="flex justify-end w-full">
+        <GoogleLoginBtn />
+      </div>
+      <div className="flex flex-col items-center justify-center gap-4 w-full h-full">
+        <Image src="/images/shift-logo.webp" alt="Shift" width={0} height={0} sizes="100vw" priority className="w-full max-w-xs" />
         <Panel className="w-full max-w-md">
-          <div className="flex flex-col gap-2">
-            <div className="flex justify-end w-full">
-              <GoogleLoginBtn />
+          {!session && (
+            <div className="flex justify-center w-full">
+              <GoogleLoginBtn className="w-full"/>
             </div>
+          )}
+          <div className="flex flex-col gap-5">
             {session && (
               <>
-                <Button variant="secondary" onClick={openCreateRoomModal} className="w-full">
+                <Button variant="primary" onClick={openCreateRoomModal} className="w-full">
                   Create Room
                 </Button>
                 <Button variant="success" onClick={openSearchModal} className="w-full">
@@ -76,7 +83,7 @@ export default function Home() {
                 <small>max:</small>
                 <p>
                   {`${room.roomPlayers.length} / ${room.roomMaxPlayers}`}
-                  <LabelPill label={room.gameRule.status} variant={room.gameRule.status === "waiting" ? "warning" : room.gameRule.status === "ready" ? "success" : room.gameRule.status === "playing" ? "danger" : "neutral"} className="ml-2" />
+                  <LabelPill label={room.gameRule.status} variant={room.gameRule.status === "waiting" ? "warning" : room.gameRule.status === "ready" ? "success" : room.gameRule.status === "playing" ? "danger" : "slate"} className="ml-2" />
                 </p>
               </div>
               <div className="flex flex-col">

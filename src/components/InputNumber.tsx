@@ -39,10 +39,10 @@ export default function InputNumber({ label, value, min, max, onChange, error }:
 
   return (
     <div className="flex flex-col gap-0.5">
-      {label && <label htmlFor={label} className="text-sm font-medium">{label}</label>}
-      <div className="w-full flex justify-between items-center border border-zinc-300/20 rounded-full shadow-inner p-2 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-300">
+      {label && <label htmlFor={label} className="text-sm font-nunito font-medium">{label}</label>}
+      <div className="w-full flex justify-between items-center border border-mint/50 rounded-full font-nunito font-medium text-lg p-2 focus:outline-none focus:ring-1 focus:ring-mint transition-all duration-300">
         <button type="button" className="cursor-pointer" onClick={() => handleChange('decrement')}>
-          <MinusIcon className="w-4 h-4" />
+          <MinusIcon className="w-4 h-4 hover:text-mint" />
         </button>
         <input
           type="number"
@@ -55,7 +55,7 @@ export default function InputNumber({ label, value, min, max, onChange, error }:
           className="w-full focus:outline-none text-center"
         />
         <button type="button" className="cursor-pointer" onClick={() => handleChange('increment')}>
-          <PlusIcon className="w-4 h-4" />
+          <PlusIcon className="w-4 h-4 hover:text-mint" />
         </button>
       </div>
       {error && <p className="text-sm text-red-500">{error}</p>}

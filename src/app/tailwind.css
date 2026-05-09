@@ -1,20 +1,23 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-background: #1A2639;
+  --color-foreground: #CBD5E1;
+  --color-retro-navy: #1A2639;
+  --color-light-navy: #253650;
+  --color-dark-navy: #0F172A;
+  --color-mint: #38E4AE;
+  --color-mint-hover: #28C795;
+  --color-grape: #B141FF;
+  --color-grape-hover: #942BE0;
+  --color-baby: #3DC2EC;
+  --color-baby-hover: #2FA5CC;
+  --color-danger: #F3355A;
+  --color-danger-hover: #D6274B;
+  --color-warning: #FFB302;
+  --color-warning-hover: #E09C00;
+  --color-success: #20D071;
+  --color-success-hover: #19B360;
+  --font-fredoka: 'Fredoka', Arial, Helvetica, sans-serif;
+  --font-nunito: 'Nunito', Arial, Helvetica, sans-serif;
 }

@@ -1,15 +1,15 @@
 interface LabelPillProps {
   label?: string;
-  variant?: "success" | "warning" | "danger" | "neutral";
+  variant?: "success" | "warning" | "danger" | "slate";
   className?: string;
 }
 
 export default function LabelPill({ label, variant = "success", className }: LabelPillProps) {
   const variantClasses = {
-    success: "bg-green-500 text-white",
-    warning: "bg-yellow-500 text-white",
-    danger: "bg-red-500 text-white",
-    neutral: "bg-zinc-500 text-white",
+    success: "bg-success text-white",
+    warning: "bg-warning text-white",
+    danger: "bg-danger text-white",
+    slate: "bg-slate-500 text-white",
   }[variant];
 
   return (

@@ -8,10 +8,10 @@ export default function Toast() {
   const { message, type, show, hideToast } = useToastStore();
 
   const typeClasses = {
-    success: "bg-green-500",
-    error: "bg-red-500",
-    warning: "bg-yellow-500",
-    info: "bg-blue-500",
+    success: "bg-success",
+    error: "bg-danger",
+    warning: "bg-warning",
+    info: "bg-baby-blue",
   }[type];
 
   useEffect(() => {

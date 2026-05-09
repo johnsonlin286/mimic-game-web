@@ -1,7 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
+
+:root {
+  --background: #1A2639;
+  --foreground: #CBD5E1;
+  --mint: #38E4AE;
+  --mint-hover: #28C795;
+  --grape: #B141FF;
+  --grape-hover: #942BE0;
+  --font-nunito: 'Nunito', Arial, Helvetica, sans-serif;
+  --font-fredoka: 'Fredoka', Arial, Helvetica, sans-serif;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-nunito);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-fredoka);
 }
 
 .modal {

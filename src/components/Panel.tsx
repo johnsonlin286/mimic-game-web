@@ -21,7 +21,7 @@ export default function Panel({ collapsible = false, collapsed = false, title, c
   }
 
   return (
-    <div className={`bg-white rounded-lg shadow-md mb-4 ${className}`}>
+    <div className={`bg-slate-500 rounded-2xl border-4 border-black shadow-lg mb-4 ${className}`}>
       {collapsible && (
         <div role="button" onClick={handleCollapse} className="flex items-center justify-between p-2 px-4 cursor-pointer">
           {<h3 className="text-lg font-bold">{title || 'Add Title'}</h3>}

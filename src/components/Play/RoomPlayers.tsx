@@ -1,11 +1,12 @@
 import { useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { Crown } from "lucide-react";
+import { Star } from "lucide-react";
+import Image from "next/image";
 
 import { useRoomStore } from "@/store/room-state";
 import useSocket from "@/hooks/useSocket";
-import Panel from "@/components/Panel";
 import Button from "@/components/Button";
+import LabelPill from "../LabelPill";
 
 interface RoomPlayersProps {
   isHost: boolean;
@@ -14,7 +15,7 @@ interface RoomPlayersProps {
 export default function RoomPlayers({ isHost }: RoomPlayersProps) {
   const { data: session } = useSession();
   const { socket, isConnected } = useSocket();
-  const { roomId, roomPlayers } = useRoomStore();
+  const { roomId, roomPlayers, roomMaxPlayers, gameRule } = useRoomStore();
 
   const emitKickPlayer = useCallback((targetSocketId: string, targetPlayerEmail: string) => {
     if (!socket || !socket.id || !isConnected) return;
@@ -33,22 +34,30 @@ export default function RoomPlayers({ isHost }: RoomPlayersProps) {
   }, [socket, isConnected, session, roomId]);
 
   return (
-    <Panel collapsible title="Players">
-      <ul className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2.5">
+      <h3 className="flex items-center gap-2 text-xl font-bold">
+        Players:
+        <span className="text-xl">
+          {roomPlayers.length} / {roomMaxPlayers}
+        </span>
+        <LabelPill label={gameRule.status} variant={gameRule.status === "waiting" ? "warning" : gameRule.status === "ready" ? "success" : gameRule.status === "playing" ? "danger" : "slate"} />
+      </h3>
+      <ul className="flex flex-col gap-2.5">
         {roomPlayers.map((player, index) => (
-          <li key={index} className="flex items-center justify-between gap-2 not-last:border-b border-zinc-200 pb-2">
-            <strong className="font-bold flex items-center gap-2">
+          <li key={index} className="flex items-center justify-between gap-4 bg-slate-500 border-4 border-black rounded-2xl p-2.5">
+            <Image src={player.playerAvatar} alt={player.playerName} width={80} height={80} className="rounded-full border-4 border-black" />
+            <h2 className="flex items-center gap-2 flex-1 font-fredoka font-bold text-2xl capitalize">
               {player.playerName}
-              {player.role === "host" && <Crown />}
-            </strong>
+              {player.role === "host" && <Star className="w-8 h-8 text-warning rotate-90" />}
+            </h2>
             {isHost && player.playerEmail !== session?.user?.email && (
               <Button size="sm" variant="danger" onClick={() => emitKickPlayer(player.socketId, player.playerEmail)}>
-                Kick Player
+                Kick
               </Button>
             )}
           </li>
         ))}
       </ul>
-    </Panel>
+    </div>
   )
 }

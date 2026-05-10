@@ -79,7 +79,7 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
                   <p className="text-sm text-gray-500">creator: {(roomData as RoomResponseData)?.creatorName}</p>
                   <p className="text-sm text-gray-500">
                     max: {(roomData as RoomResponseData)?.roomPlayers.length } / {(roomData as RoomResponseData)?.roomMaxPlayers}
-                    <LabelPill label={(roomData as RoomResponseData)?.gameRule.status} variant={(roomData as RoomResponseData)?.gameRule.status === "waiting" ? "warning" : (roomData as RoomResponseData)?.gameRule.status === "ready" ? "success" : (roomData as RoomResponseData)?.gameRule.status === "playing" ? "danger" : "neutral"} className="ml-2" />
+                    <LabelPill label={(roomData as RoomResponseData)?.gameRule.status} variant={(roomData as RoomResponseData)?.gameRule.status === "waiting" ? "warning" : (roomData as RoomResponseData)?.gameRule.status === "ready" ? "success" : (roomData as RoomResponseData)?.gameRule.status === "playing" ? "danger" : "slate"} className="ml-2" />
                   </p>
                   <p className="text-sm text-gray-500">mode: {(roomData as RoomResponseData)?.isPublic ? "public" : "offline"}</p>
                   {!session ? (

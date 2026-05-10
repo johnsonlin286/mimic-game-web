@@ -39,10 +39,12 @@ export default function PlayLobby() {
     <>
       <PlayGameSetup isHost={isHost} />
       <RoomPlayers isHost={isHost} />
-      {isHost && (
-        <Button variant="success" size="lg" disabled={gameRule.status !== "ready"} onClick={handleStartGame} className="w-full">
+      {isHost ? (
+        <Button variant="success" disabled={gameRule.status !== "ready"} onClick={handleStartGame} className="w-full my-5">
           Start Game
         </Button>
+      ) : (
+        <p className="text-center text-baby text-2xl font-bold my-5">Waiting for host to start the game...</p>
       )}
     </>
   )

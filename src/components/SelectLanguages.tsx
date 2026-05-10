@@ -23,6 +23,6 @@ export default function SelectLanguages({ socket, value, onChange }: SelectLangu
   }, [socket]);
 
   return (
-    <SelectInput label="Language" options={languages} value={value || ""} onChange={onChange} />
+    <SelectInput label="Language" options={languages} value={value || ""} onChange={onChange} className="w-full" />
   )
 }

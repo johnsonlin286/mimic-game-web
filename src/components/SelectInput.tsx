@@ -99,11 +99,11 @@ export default function SelectInput({
   };
 
   const triggerClasses = [
-    "w-full flex items-center justify-between gap-2 border border-zinc-300/20 rounded-full shadow-inner px-3 py-2 text-left",
-    "focus:outline-none focus:ring-2 focus:ring-sky-500 transition-all duration-300",
-    disabled ? "opacity-50 cursor-not-allowed bg-zinc-100/50" : "cursor-pointer bg-white hover:border-zinc-400/30",
-    !value && "text-zinc-500",
-    error && "border-red-400/60 focus:ring-red-400",
+    "w-full flex items-center justify-between gap-2 border border-mint/50 rounded-full bg-transparent px-3 py-2 text-left",
+    "focus:outline-none focus:ring-1 focus:ring-mint transition-all duration-300",
+    disabled ? "cursor-not-allowed bg-slate-500/50 text-slate-300/50" : "cursor-pointer bg-transparent",
+    value && "font-nunito font-bold",
+    error && "border-danger focus:ring-danger",
   ]
     .filter(Boolean)
     .join(" ");
@@ -130,7 +130,7 @@ export default function SelectInput({
       >
         <span className="truncate">{displayLabel}</span>
         <ChevronDown
-          className={`h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          className={`h-4 w-4 shrink-0 text-mint transition-transform duration-200 ${open ? "rotate-180" : ""}`}
           aria-hidden
         />
       </button>
@@ -142,7 +142,7 @@ export default function SelectInput({
           tabIndex={0}
           autoFocus
           aria-labelledby={label ? `${id}-label` : id}
-          className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 max-h-60 overflow-auto rounded-2xl border border-zinc-300/25 bg-white py-1 shadow-lg shadow-zinc-900/10 ring-1 ring-black/5 outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+          className="absolute left-0 right-0 top-[calc(100%+4px)] z-50 max-h-60 overflow-auto rounded-2xl bg-light-navy py-1 shadow-lg ring-2 ring-black outline-none"
           onKeyDown={onListKeyDown}
         >
           {options.map((option, index) => {
@@ -154,22 +154,20 @@ export default function SelectInput({
                 role="option"
                 aria-selected={isSelected}
                 className={[
-                  "flex cursor-pointer items-center justify-between gap-2 px-3 py-2 text-sm transition-colors",
-                  isHighlighted ? "bg-sky-500/15 text-zinc-900" : "text-zinc-800",
-                  isSelected && !isHighlighted && "bg-zinc-100/80",
+                  "flex cursor-pointer items-center justify-between gap-2 px-3 py-2 text-sm text-white transition-colors",
+                  isHighlighted && "bg-mint-hover/50 text-baby! font-bold",
                 ].join(" ")}
                 onMouseEnter={() => setHighlightedIndex(index)}
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => selectOption(option)}
               >
                 <span className="truncate">{option.label}</span>
-                {isSelected && <Check className="h-4 w-4 shrink-0 text-sky-600" strokeWidth={2.5} aria-hidden />}
+                {isSelected && <Check className="h-4 w-4 shrink-0 text-baby" strokeWidth={2.5} aria-hidden />}
               </li>
             );
           })}
         </ul>
       )}
-
       {error && <p className="text-sm text-red-500">{error}</p>}
     </div>
   );

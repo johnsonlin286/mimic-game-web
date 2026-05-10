@@ -1,6 +1,7 @@
 interface RoomCreatePayload {
   playerName: string;
   creatorEmail: string;
+  creatorAvatar: string;
   roomMaxPlayers: number;
   isPublic: boolean;
 }
@@ -63,6 +64,7 @@ interface RoomJoinPayload {
   roomId: string;
   playerEmail: string;
   playerName: string;
+  playerAvatar: string;
 }
 
 interface RoomJoinResponse {
@@ -163,6 +165,7 @@ interface RoomPlayerData {
   socketId: string;
   playerEmail: string;
   playerName: string;
+  playerAvatar: string;
   role: string;
 }
 

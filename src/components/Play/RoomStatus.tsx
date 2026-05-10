@@ -5,7 +5,6 @@ import { CircleArrowLeft, CopyIcon } from "lucide-react";
 import { useRoomStore } from "@/store/room-state";
 import { useToastStore } from "@/store/toast-state";
 import useSocket from "@/hooks/useSocket";
-import LabelPill from "@/components/LabelPill";
 import RestartBtn from "@/components/Play/RestartBtn";
 
 interface PlayRoomStatusProps {
@@ -53,7 +52,6 @@ export default function PlayRoomStatus({ isHost }: PlayRoomStatusProps) {
         <button onClick={() => handleCopy(roomId)} className="cursor-pointer">
           <CopyIcon className="w-6 h-6 text-mint hover:text-mint-hover" />
         </button>
-        <LabelPill variant={gameRule.status === "waiting" ? "warning" : gameRule.status === "ready" ? "success" : gameRule.status === "playing" ? "danger" : "slate"} />
       </div>
       <div>
         {isHost && gameRule.status === 'playing' && (

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import useSocket from "@/hooks/useSocket"
 import { useRoomStore } from "@/store/room-state"
 import { useToastStore } from "@/store/toast-state"
+import randomAvatar from "@/utils/randomAvatar"
 import Modal from "../Modal"
 import Input from "../Input"
 import InputNumber from "../InputNumber"
@@ -44,7 +45,6 @@ export default function ModalCreate({ isOpen, onClose, playerName, playerEmail }
   useEffect(() => {
     setCreateRoomFormData((prev) => ({
       ...prev,
-      playerName: playerName,
       playerEmail: playerEmail,
     }))
   }, [playerName, playerEmail]);
@@ -55,16 +55,18 @@ export default function ModalCreate({ isOpen, onClose, playerName, playerEmail }
     }
     const { playerName, roomMaxPlayers, isPublic } = createRoomFormData;
     setCreateRoomError(null);
+    const sanitizedPlayerName = playerName.replace(/[^a-zA-Z0-9 ]/g, "").substring(0, 15);
+    const creatorAvatar = randomAvatar();
     const payload: RoomCreatePayload = {
-      playerName: playerName,
+      playerName: sanitizedPlayerName,
       creatorEmail: playerEmail,
+      creatorAvatar: creatorAvatar,
       roomMaxPlayers: roomMaxPlayers,
       isPublic: isPublic,
     }
     socket?.emit("room:create", payload)
       .on("room-created", (response: RoomCreateResponse) => {
         const { data } = response;
-        // console.log("room-created", data);
         setToast(`Room ${data.roomId} created`, "success");
         setRoom({
           roomId: data.roomId,
@@ -76,11 +78,6 @@ export default function ModalCreate({ isOpen, onClose, playerName, playerEmail }
           createdAt: data.createdAt,
           updatedAt: data.updatedAt,
         } as RoomResponseData);
-        setCreateRoomFormData({
-          playerName: "",
-          roomMaxPlayers: 3,
-          isPublic: false,
-        });
         onClose();
         router.push(`/play/${data.roomId}`);
       })
@@ -111,10 +108,15 @@ export default function ModalCreate({ isOpen, onClose, playerName, playerEmail }
     setCreateRoomError(null);
     const errors: CreateRoomError = {};
     const { playerName, roomMaxPlayers } = createRoomFormData;
+    const playerNameRegex = /^[a-zA-Z0-9 ]+$/;
     if (!playerName || playerName.trim() === "") {
       errors.playerName = "Player name is required";
     } else if (playerName.length < 3) {
       errors.playerName = "Player name must be at least 3 characters long";
+    } else if (!playerNameRegex.test(playerName)) {
+      errors.playerName = "Player name must only contain letters, numbers, and spaces";
+    } else if (playerName.length > 15) {
+      errors.playerName = "Player name must be less than 15 characters long";
     }
     if (!roomMaxPlayers || roomMaxPlayers < 3 || roomMaxPlayers > 10) {
       errors.roomMaxPlayers = "Room max players must be between 3 and 10";
@@ -132,7 +134,7 @@ export default function ModalCreate({ isOpen, onClose, playerName, playerEmail }
       <div className="flex flex-col gap-4">
         <h2 className="text-2xl font-bold">Create Room</h2>
         {createRoomError?.generalError && <p className="text-red-500">{createRoomError.generalError}</p>}
-        <Input type="text" label="Player Name" placeholder="Player Name" value={createRoomFormData.playerName} onChange={(e) => setCreateRoomFormData({ ...createRoomFormData, playerName: e.target.value.toLowerCase() })} error={createRoomError?.playerName} />
+        <Input type="text" label="Agent Code" placeholder="Six Seven Eight" value={createRoomFormData.playerName} autoFocus={true} onChange={(e) => setCreateRoomFormData({ ...createRoomFormData, playerName: e.target.value })} error={createRoomError?.playerName} />
         <InputNumber label="Max Players" min={3} max={10} value={createRoomFormData.roomMaxPlayers.toString()} onChange={(value) => setCreateRoomFormData({ ...createRoomFormData, roomMaxPlayers: parseInt(value) > 0 ? parseInt(value) : 3 })} error={createRoomError?.roomMaxPlayers} />
         <SwitchInput id="room-public" labelLeft="Offline" labelRight="Online" checked={createRoomFormData.isPublic} onCheckedChange={(checked) => setCreateRoomFormData({ ...createRoomFormData, isPublic: checked })} className="w-fit" />
         <Button onClick={formValidation}>Create Room</Button>

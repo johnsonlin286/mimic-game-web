@@ -3,6 +3,7 @@ import { useMutation } from "@tanstack/react-query"
 
 import { searchRoom } from "@/services/rooms"
 import useSocketJoin from "@/hooks/useSocketJoin"
+import randomAvatar from "@/utils/randomAvatar"
 import Modal from "../Modal"
 import Input from "../Input"
 import Button from "../Button"
@@ -10,6 +11,7 @@ import Button from "../Button"
 interface ModalSearchProps {
   isOpen: boolean;
   onClose: () => void;
+  roomId?: string;
   playerName: string;
   playerEmail: string;
 }
@@ -31,7 +33,7 @@ interface FormChangeEvent {
   value: string;
 }
 
-export default function ModalSearch({ isOpen, onClose, playerName, playerEmail }: ModalSearchProps) {
+export default function ModalSearch({ isOpen, onClose, roomId, playerName, playerEmail }: ModalSearchProps) {
   const [modalFormData, setModalFormData] = useState<ModalFormData>({
     roomId: "",
     playerName: "",
@@ -43,15 +45,16 @@ export default function ModalSearch({ isOpen, onClose, playerName, playerEmail }
   useEffect(() => {
     setModalFormData((prev) => ({
       ...prev,
-      playerName: playerName,
+      roomId: roomId || "",
       playerEmail: playerEmail,
     }))
-  }, [playerName, playerEmail]);
+  }, [roomId, playerName, playerEmail]);
 
   const { mutate: searchRoomMutation, isPending } = useMutation({
     mutationFn: searchRoom,
     onSuccess: () => {
-      joinRoom(modalFormData.roomId, modalFormData.playerEmail, modalFormData.playerName);
+      const playerAvatar = randomAvatar();
+      joinRoom(modalFormData.roomId, modalFormData.playerEmail, modalFormData.playerName, playerAvatar);
     },
     onError: (error) => {
       const errorData = JSON.parse(error.message) as ErrorResponse;
@@ -72,6 +75,7 @@ export default function ModalSearch({ isOpen, onClose, playerName, playerEmail }
   const handlerRoomValidation = () => {
     const errors: ModalFormError = {};
     const { roomId, playerName } = modalFormData;
+    const playerNameRegex = /^[a-zA-Z0-9 ]+$/;
     if (!roomId || roomId.trim() === "") {
       errors.roomId = "Room ID is required";
     }
@@ -79,6 +83,10 @@ export default function ModalSearch({ isOpen, onClose, playerName, playerEmail }
       errors.playerName = "Player Name is required";
     } else if (playerName.length < 3) {
       errors.playerName = "Player Name must be at least 3 characters long";
+    } else if (playerName.length > 15) {
+      errors.playerName = "Player Name must be less than 15 characters long";
+    } else if (!playerNameRegex.test(playerName)) {
+      errors.playerName = "Player Name must only contain letters, numbers, and spaces";
     }
     setModalFormError(errors);
     if (Object.keys(errors).length > 0) return;
@@ -90,8 +98,8 @@ export default function ModalSearch({ isOpen, onClose, playerName, playerEmail }
       <div className="flex flex-col gap-4">
         <h2 className="text-2xl font-bold">Search and Join Room</h2>
         {joinRoomError && <p className="text-red-500">{joinRoomError}</p>}
-        <Input type="text" placeholder="Input Room ID" onChange={(e) => handleFormChange({ key: "roomId", value: e.target.value })} error={modalFormError?.roomId} />
-        <Input type="text" placeholder="Input Player Name" value={modalFormData.playerName} onChange={(e) => handleFormChange({ key: "playerName", value: e.target.value })} error={modalFormError?.playerName} />
+        <Input type="text" label="Room ID" placeholder="Input Room ID" value={modalFormData.roomId} onChange={(e) => handleFormChange({ key: "roomId", value: e.target.value })} error={modalFormError?.roomId} inputClassName="uppercase text-center"/>
+        <Input type="text" label="Agent Code" placeholder="Six Seven Eight" value={modalFormData.playerName} autoFocus={true} onChange={(e) => handleFormChange({ key: "playerName", value: e.target.value })} error={modalFormError?.playerName} inputClassName="text-center" />
         <Button variant="success" onClick={handlerRoomValidation} disabled={isPending}>
           Join Room
         </Button>

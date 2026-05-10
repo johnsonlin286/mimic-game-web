@@ -12,15 +12,17 @@ export default function useSocketJoin() {
   const [joinRoomError, setJoinRoomError] = useState<string | undefined>()
   const { setRoom } = useRoomStore();
 
-  const joinRoom = useCallback((roomId: string, playerEmail: string, playerName: string): void => {
+  const joinRoom = useCallback((roomId: string, playerEmail: string, playerName: string, playerAvatar: string): void => {
     if (!roomId || !playerEmail || !playerName) return;
     if (!isConnected) {
       socketConnect();
     }
+    const sanitizedPlayerName = playerName.replace(/[^a-zA-Z0-9 ]/g, "").substring(0, 15);
     const payload: RoomJoinPayload = {
       roomId: roomId,
       playerEmail: playerEmail,
-      playerName: playerName,
+      playerName: sanitizedPlayerName,
+      playerAvatar: playerAvatar,
     }
     socket?.emit("room:join", payload)
       .on("room-join-failed", (response: RoomJoinResponse) => {

@@ -131,7 +131,7 @@ export default function CardStack({
 
   return (
     <div
-      className="flex flex-col items-center w-full"
+      className="flex flex-col justify-center items-center w-full h-full"
       role="group"
       aria-label={aria}
     >

@@ -29,6 +29,7 @@ interface PlayerWithRole {
   playerName: string;
   playerEmail: string;
   gameRole: string;
+  gameWord: string;
   voters?: Partial<PlayerWithRole>[];
   isAlive: boolean;
 }

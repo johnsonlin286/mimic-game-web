@@ -92,7 +92,7 @@ export default function Home() {
               </div>
               <div className="flex flex-col gap-2">
                 <small>mode:</small>
-                {room.isPublic ? <Button variant="primary" size="sm" disabled={room.gameRule.status !== "waiting"} onClick={() => handleJoinRoom(room.roomId)}>Join</Button> : <span >Offline</span>}
+                {room.isPublic ? <Button variant="primary" size="sm" disabled={room.gameRule.status === "playing" || room.gameRule.status === "finished"} onClick={() => handleJoinRoom(room.roomId)}>Join</Button> : <span >Offline</span>}
               </div>
             </div>
           </Panel>

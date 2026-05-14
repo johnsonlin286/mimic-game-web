@@ -75,9 +75,12 @@ export default function ModalSearch({ isOpen, onClose, roomId, playerName, playe
   const handlerRoomValidation = () => {
     const errors: ModalFormError = {};
     const { roomId, playerName } = modalFormData;
+    const roomIdRegex = /^[a-zA-Z0-9]+$/;
     const playerNameRegex = /^[a-zA-Z0-9 ]+$/;
     if (!roomId || roomId.trim() === "") {
       errors.roomId = "Room ID is required";
+    } else if (!roomIdRegex.test(roomId)) {
+      errors.roomId = "Room ID must only contain letters and numbers";
     }
     if (!playerName || playerName.trim() === "") {
       errors.playerName = "Player Name is required";
@@ -90,7 +93,8 @@ export default function ModalSearch({ isOpen, onClose, roomId, playerName, playe
     }
     setModalFormError(errors);
     if (Object.keys(errors).length > 0) return;
-    searchRoomMutation(modalFormData.roomId);
+    const sanitizedRoomId = modalFormData.roomId.replace(/[^a-zA-Z0-9]/g, "").substring(0, 4);
+    searchRoomMutation(sanitizedRoomId);
   }
 
   return (

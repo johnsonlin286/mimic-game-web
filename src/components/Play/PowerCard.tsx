@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { Zap } from "lucide-react";
 
 import { useLongPress } from "@uidotdev/usehooks";
 import { useRoomStore } from '@/store/room-state';
@@ -67,10 +68,10 @@ export default function PowerCard({ power }: PowerCardProps) {
     <div className="flex justify-center items-center w-full h-full">
       <div role="button" {...attrs} className={`relative w-full h-full md:max-w-60 md:max-h-80 aspect-3/4 perspective-1000 transform-3d transition-all duration-300 cursor-pointer ${isFlipped ? 'rotate-y-180' : ''}`}>
         <div className="w-full h-full transform-3d">
-          <div className="absolute flex flex-col justify-between items-center gap-2 w-full h-full backface-hidden bg-white border border-zinc-100 rounded-2xl shadow-lg p-6">
+          <div className="absolute flex flex-col justify-between items-center gap-2 w-full h-full backface-hidden bg-dark-navy rounded-2xl shadow-lg p-6">
             <div className="flex-1 flex flex-col justify-center items-center gap-2">
-              <h1 className="text-2xl font-bold text-center">{power.name}</h1>
-              <p className="text-sm text-zinc-500 text-center">{power.description}</p>
+              <h1 className="text-3xl font-bold text-center text-white uppercase">{power.name}</h1>
+              <p className="text-sm text-white text-center">{power.description}</p>
             </div>
             {power.type === 'active' && (
               <Button variant="primary" size="sm" disabled={power.isUsed} onClick={() => handleUsePower(power.name)} className="w-full self-end">
@@ -78,11 +79,13 @@ export default function PowerCard({ power }: PowerCardProps) {
               </Button>
             )}
           </div>
-          <div className="absolute flex flex-col justify-between items-center w-full h-full backface-hidden rotate-y-180 bg-orange-500 rounded-2xl shadow-lg p-6">
+          <div className="absolute flex flex-col justify-between items-center w-full h-full backface-hidden rotate-y-180 bg-dark-navy rounded-2xl shadow-lg p-6">
             <div className="flex-1 flex flex-col gap-3 justify-center items-center">
-              <strong className="text-white text-2xl font-bold">GAME LOGO</strong>
+              <div className="flex justify-center items-center border-4 border-grape rounded-full p-5">
+                <Zap className="w-20 h-20 text-grape" />
+              </div>
               <p className="text-sm text-center text-zinc-100">
-                Tap and hold to reveal your superpower
+                Tap and hold to reveal your specialist skills
               </p>
             </div>
           </div>

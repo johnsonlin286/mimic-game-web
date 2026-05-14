@@ -28,7 +28,7 @@ export default function GoogleLoginBtn({ className }: GoogleLoginBtnProps) {
     }
   }, [status]);
 
-  const buttonStyles = `${roboto.className} flex justify-center items-center gap-2.5 bg-white text-[#1F1F1F] text-sm font-medium px-3 py-2.5 rounded-full cursor-pointer hover:bg-[#F2F2F2] ${className}`;
+  const buttonStyles = `${roboto.className} flex justify-center items-center gap-2.5 bg-white text-[#1F1F1F] text-sm font-medium px-3 py-2.5 border rounded-full cursor-pointer hover:bg-[#F2F2F2] ${className}`;
 
   if (loading) {
     return (

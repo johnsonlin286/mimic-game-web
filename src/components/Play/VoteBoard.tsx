@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { CircleCheck } from "lucide-react";
+import Image from "next/image";
 
 import { useRoomStore } from "@/store/room-state";
 import useSocket from "@/hooks/useSocket";
@@ -22,6 +23,23 @@ export default function VoteBoard() {
 
   const isHost = roomPlayers.find((player) => player.playerEmail === session?.user?.email)?.role === "host";
   const isAlive = gameData?.players?.find((player: PlayerWithRole) => player.playerEmail === session?.user?.email)?.isAlive;
+
+  const winStatusImage = (winStatus: string) => {
+    switch (winStatus) {
+      case "The Shifter":
+        return "/images/win-two.webp";
+      case "The Unknown Origin":
+        return "/images/win-two.webp";
+      case "The Agents":
+        return "/images/win-one.webp";
+      case "The Unknown Origin Got Caught":
+        return "/images/agent-jellyfish-caught.webp";
+      case "The Saboteur":
+        return "/images/agent-octopus.webp";
+      default:
+        return "/images/agent-male.webp";
+    }
+  }
 
   useEffect(() => {
     if (!socket) return;
@@ -50,19 +68,19 @@ export default function VoteBoard() {
       const { message, data } = response;
       switch (message) {
         case "Minority is the winner":
-          setWinStatus("minority");
+          setWinStatus("The Shifter");
           break;
         case "Blind is the winner":
-          setWinStatus("blind");
+          setWinStatus("The Unknown Origin");
           break;
         case "Majority is the winner":
-          setWinStatus("majority");
+          setWinStatus("The Agents");
           break;
         case "Blind got caught!":
-          setWinStatus("blind-caught");
+          setWinStatus("The Unknown Origin Got Caught");
           break;
         case "Saboteur is the winner":
-          setWinStatus("saboteur");
+          setWinStatus("The Saboteur");
           break;
         default:
           setWinStatus("none");
@@ -228,10 +246,12 @@ export default function VoteBoard() {
           <div className="flex flex-col gap-2">
             {winStatus === null ? (
               <>
-                <ol className="flex flex-col gap-2 border-t border-zinc-300 py-2">
+                <ol className="flex flex-col gap-4 border-t border-zinc-300 py-2">
                   {gameData?.players?.map((player: PlayerWithRole) => (
                     <li key={player.playerEmail} className="flex items-center justify-between gap-2">
-                      <strong className={player.isAlive ? 'text-zinc-900' : 'text-zinc-500 line-through'}>{player.playerName}</strong>
+                      <strong className={`font-fredoka text-xl capitalize ${player.isAlive ? 'text-white' : 'text-zinc-500 line-through'}`}>
+                        {player.playerName}
+                      </strong>
                       <ul className="flex flex-col">
                         {player.voters?.map((voter, index) => (
                           <li key={index} className="text-xs text-zinc-500">
@@ -254,10 +274,10 @@ export default function VoteBoard() {
                   ))}
                 </ol>
                 {isHost && (
-                  <>
-                    <Button variant="danger" size="md" disabled={!allVoted} onClick={submitVote} className="w-full">Calculate Vote</Button>
-                    <Button variant="secondary" size="md" onClick={voteRequest} className="w-full">Reload Vote</Button>
-                  </>
+                  <div className="flex flex-col gap-4">
+                    <Button variant="danger" disabled={!allVoted} onClick={submitVote} className="w-full">Submit Vote</Button>
+                    <Button variant="warning" size="sm" onClick={voteRequest} className="w-full">Reload Vote</Button>
+                  </div>
                 )}
               </>
             ) : winStatus !== null && winStatus !== "none" ? (
@@ -268,23 +288,36 @@ export default function VoteBoard() {
                   </p>
                 ) : (
                   <>
-                    <p className="text-lg text-center font-bold">
+                    <p className="text-xl text-center text-white font-fredoka font-bold">
                       The winner is the
                       {' '}
                       <span className="capitalize">{winStatus}!</span>
                     </p>
+                    <div className="flex justify-center items-center">
+                      <Image src={winStatusImage(winStatus)} alt="Win Status" priority width={150} height={150} />
+                    </div>
                     {superpowerTriggered && (
                       <p className="text-center text-red-500">
                         {superpowerTriggered}
                       </p>
                     )}
-                    <p className="text-sm text-zinc-500">
-                      <strong>The majority word was: {gameData?.wordPairList[0].majorityWord}</strong>
+                    <p className="text-sm text-center leading-relaxed">
+                      <span>
+                        The correct password was:&nbsp;
+                        <strong>
+                          {gameData?.wordPairList[0].majorityWord}
+                        </strong>
+                      </span>
                       <br />
-                      <strong>The minority word was: {gameData?.wordPairList[0].minorityWord}</strong>
+                      <span>
+                        The fake password was:&nbsp;
+                        <strong>
+                          {gameData?.wordPairList[0].minorityWord}
+                        </strong>
+                      </span>
                     </p>
                     {isHost && (
-                      <div className="flex justify-between gap-2">
+                      <div className="flex justify-between gap-4">
                         <RestartBtn isHost={isHost} />
                         <Button variant="primary" size="md" onClick={replayGame} className="w-full">Replay</Button>
                       </div>
@@ -296,6 +329,8 @@ export default function VoteBoard() {
               <>
                 <p className="text-lg text-center font-bold">
                   No winner yet!
+                  <br />
+                  Vote result is tied!
                 </p>
                 {superpowerTriggered && (
                   <p className="text-center text-red-500">
@@ -303,7 +338,6 @@ export default function VoteBoard() {
                   </p>
                 )}
                 <p>
-                  {/* show the player name who is isAlive = false */}
                   {gameData?.players?.filter((player: PlayerWithRole) => !player.isAlive).map((player: PlayerWithRole) => (
                     <span key={player.playerEmail} className="text-zinc-500 text-sm line-through block">
                       {player.playerName}
@@ -311,7 +345,7 @@ export default function VoteBoard() {
                   ))}
                 </p>
                 {isHost && (
-                  <Button variant="secondary" size="md" onClick={continueGame} className="w-full">Continue</Button>
+                  <Button variant="primary" size="md" onClick={continueGame} className="w-full">Continue</Button>
                 )}
               </>
             )}

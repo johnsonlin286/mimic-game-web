@@ -51,7 +51,6 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
   }
 
   const activatedPassiveSuperpower = useCallback((superpowerName: string, value: boolean) => {
-    console.log("activatedPassiveSuperpower", superpowerName, value);
     if (!socket) return;
     setIsPassivePowerActivated(value);
     socket.emit("superpower:use-passive-power", {
@@ -60,11 +59,9 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
       powerName: superpowerName,
       isActive: value,
     }).on("use-passive-power-failed", (response) => {
-      // console.log('activate-passive-power-failed', response);
       setToast(response.message, "error");
       setIsPassivePowerActivated(false);
     }).on("use-passive-power-success", (response) => {
-      // console.log("use-passive-power-success", response);
       setToast(response.message, "success");
     })
   }, [socket, roomId, session, setToast])
@@ -81,36 +78,30 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
   useEffect(() => {
     if (!socket) return;
     socket.on("listen-game-start-vote", (response) => {
-      // console.log("listen-game-start-vote", response);
       setVoteModal(true);
       setRoom(response.data);
     });
 
     socket.on("listen-game-vote-response", (response) => {
-      // console.log("listen-game-vote-response", response);
       setRoom(response.data);
     })
 
     socket.on("listen-game-all-players-voted", () => {
-      // console.log("listen-game-all-players-voted");
       setAllVoted(true);
     })
 
     socket.on("listen-game-calculate-results-failed", (response) => {
-      // console.log("listen-game-calculate-results-failed", response);
       setToast(response.message, "error");
       setIsPassivePowerActivated(false);
     })
 
     socket.on("listen-game-calculate-results-player", (response) => {
-      console.log("listen-game-calculate-results-player", response);
       setRoom({
         ...response.data.room,
       })
     })
 
     socket.on("listen-game-calculate-results", (response) => {
-      // console.log("listen-game-calculate-results", response);
       setIsPassivePowerActivated(false);
       const { message, data } = response;
       switch (message) {
@@ -137,10 +128,8 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
     })
 
     socket.on("listen-game-superpower-triggered", (response) => {
-      // console.log("listen-game-superpower-triggered", response);
       const { triggeredEffects } = response.data
       triggeredEffects.forEach((effect: { playerEmail: string, playerName: string, power: string }) => {
-        console.log("effect", effect);
         switch (effect.power) {
           case "chief":
             setSuperpowerTriggered(`${effect.playerName} The Chief pulled rank to break the tie.`)
@@ -153,12 +142,10 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
     })
 
     socket.on("listen-game-blind-got-caught", () => {
-      console.log("listen-game-blind-got-caught");
       setGuessWordModal(true);
     })
 
     socket.on("listen-game-blind-guess-the-word-correctly", () => {
-      console.log("listen-game-blind-guess-the-word-correctly");
       setGuessWordModal(false);
       setWinStatus("blind");
     })
@@ -184,7 +171,6 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
     })
 
     socket.on("listen-game-continue-success", (response) => {
-      // console.log("listen game-continue-success", response);
       setRoom(response.data);
       setVoteModal(false);
       setGuessWordModal(false);
@@ -195,7 +181,6 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
     })
 
     socket.on("listen-game-restart-success", (response) => {
-      // console.log("listen game-restart-success", response);
       setRoom(response.data);
       setVoteModal(false);
       setGuessWordModal(false);
@@ -206,7 +191,6 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
     })
 
     socket.on("listen-game-initialize-success", (response) => {
-      // console.log("listen game-initialize-success", response);
       setRoom(response.data);
       setVoteModal(false);
       setGuessWordModal(false);
@@ -223,21 +207,20 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
       roomId,
       playerEmail: session.user.email,
     }).on("game-start-vote-failed", (response) => {
-      console.log("game-start-vote-failed", response);
+      setToast(response.message, "error");
     });
-  }, [socket, roomId, session]);
+  }, [socket, roomId, session, setToast]);
 
   const voteHandler = useCallback((playerEmail: string) => {
     if (!session?.user?.email || !socket || !roomId) return;
-    console.log("voteHandler", playerEmail);
     socket.emit("game:vote-response", {
       roomId,
       playerEmail: session.user.email,
       votedEmail: playerEmail,
     }).on("game-vote-response-failed", (response) => {
-      console.log("game-vote-response-failed", response);
+      setToast(response.message, "error");
     })
-  }, [session, socket, roomId]);
+  }, [session, socket, roomId, setToast]);
 
   const submitVote = useCallback(() => {
     if (!session?.user?.email || !socket || !roomId) return;
@@ -248,7 +231,6 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
       passivePowerName: playerSuperpower?.name,
       passivePowerOwnerEmail: session?.user?.email,
     }).on("game-calculate-results-failed", (response) => {
-      console.log("game-calculate-results-failed", response);
       setToast(response.message, "error");
       setIsPassivePowerActivated(false);
     })
@@ -267,13 +249,11 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
   }, [socket, roomId, session, guessWord])
 
   const continueGame = useCallback(() => {
-    console.log("continueGame");
     if (!session?.user?.email || !socket || !roomId) return;
     socket.emit("game:continue", {
       playerEmail: session.user.email,
       roomId,
     }).on("game-continue-failed", (response) => {
-      console.log("game-continue-failed", response);
       setToast(response.message, "error");
       setIsPassivePowerActivated(false);
     });
@@ -281,7 +261,6 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
 
   // replay the game using the same game rules
   const replayGame = useCallback(() => {
-    console.log("replayGame");
     if (!session?.user?.email || !socket || !roomId) return;
     socket.emit("game:initialize", {
       playerEmail: session.user.email,

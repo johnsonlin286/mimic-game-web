@@ -29,7 +29,6 @@ export default function CategoriesOption({ lang = "en", socket, selected, onChan
     socket
       .emit(emitEvent)
       .once(listenEvent, (response: { data?: { categories?: CategoriesType[] } }) => {
-        console.log("listen-fetch-categories-options", response);
         setCategories(response.data?.categories || []);
       });
   }, [socket, lang]);

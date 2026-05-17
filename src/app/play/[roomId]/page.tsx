@@ -24,8 +24,6 @@ export default function PlayPage() {
 
   const isHost = useMemo(() => {
     if (!roomPlayers) return
-    // console.log(roomPlayers)
-    // return true;
     return roomPlayers.find((p) => p.playerEmail === session?.user?.email)?.role === "host";
   }, [roomPlayers, session?.user?.email]);
 

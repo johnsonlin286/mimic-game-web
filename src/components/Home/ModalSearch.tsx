@@ -63,7 +63,6 @@ export default function ModalSearch({ isOpen, onClose, roomId, playerName, playe
     },
     onError: (error) => {
       const errorData = JSON.parse(error.message) as ErrorResponse;
-      console.log(errorData)
       setModalFormError({
         roomId: errorData.message,
       })

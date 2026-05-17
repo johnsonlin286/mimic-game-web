@@ -30,7 +30,6 @@ export default function Checkbox({ id, label, color = "primary", disabled = fals
 
   const handleChange = (value: boolean) => {
     if (disabled || readonly) return;
-    console.log("handleChange", value);
     setIsChecked(value);
     onChange?.(value);
   }

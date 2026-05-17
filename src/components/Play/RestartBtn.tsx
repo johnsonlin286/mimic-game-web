@@ -31,7 +31,6 @@ export default function RestartBtn({ isHost, size = "md" }: RestartBtnProps) {
       playerEmail: session.user.email,
       roomId,
     }).on("game-restart-failed", (response) => {
-      console.log("game-restart-failed", response);
       setToast(response.message, "error");
     });
   }, [socket, roomId, session, setToast])

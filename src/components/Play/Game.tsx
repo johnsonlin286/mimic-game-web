@@ -36,13 +36,11 @@ export default function PlayGame() {
     if (!socket) return;
 
     socket.on("listen-game-initialized-player", (response) => {
-      console.log(response.data.gameWord, response.data.superpower);
       setGameWord(response.data.gameWord);
       setSuperpower(response.data.superpower ?? null);
     })
 
     socket.on("use-superpower-interrogator", (response) => {
-      // console.log('use-superpower-interrogator', response)
       setSuperpowerModal(true);
       setSuperpowerOptions(response.data);
     })
@@ -70,7 +68,6 @@ export default function PlayGame() {
     })
 
     socket.on("use-superpower-detective", (response) => {
-      // console.log('use-superpower-detective', response)
       setSuperpowerModal(true);
       setSuperpowerOptions(response.data);
       setSuperpower((prev) => ({
@@ -80,7 +77,6 @@ export default function PlayGame() {
     })
 
     socket.on("use-superpower-wiretapper", (response) => {
-      // console.log('use-superpower-wiretapper', response)
       setSuperpowerModal(true);
       setSuperpowerOptions(response.data);
       setSuperpower((prev) => ({
@@ -113,7 +109,6 @@ export default function PlayGame() {
     })
 
     socket.on("listen-hide-overlay-success", () => {
-      // console.log('listen-hide-overlay-success', response)
       setOverlay(false);
       setOverlayMessage(null);
     })
@@ -131,8 +126,6 @@ export default function PlayGame() {
   useEffect(() => {
     const player = gameData?.players?.find((player: PlayerWithRole) => player.playerEmail === session?.user?.email);
     setPlayerData(player ?? null);
-    // setGameWord(player?.gameWord ?? "");
-    // setSuperpower(player?.superpower ?? null);
   }, [gameData, session])
 
   return (

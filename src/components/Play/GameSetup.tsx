@@ -130,7 +130,7 @@ export default function PlayGameSetup({ isHost }: PlayGameSetupProps) {
               </div>
               <div className="flex items-center justify-between gap-2">
                 <InfoPopover label="Specialist" text="Player will randomly receive a special role. Minimum 5 players to enable." />
-                <SwitchInput id="superpower" checked={setupFormData.superpowers || false} disabled={roomPlayers?.length && roomPlayers?.length < 5 ? true : false} onCheckedChange={(value) => handleSetupFormChange("superpowers", value)} />
+                <SwitchInput id="superpower" checked={setupFormData.superpowers || false} /*disabled={roomPlayers?.length && roomPlayers?.length < 5 ? true : false}*/ onCheckedChange={(value) => handleSetupFormChange("superpowers", value)} />
               </div>
               <div className="flex items-center justify-between gap-2">
                 <InfoPopover label="Image Mode" text="Show secret image instead of word."/>

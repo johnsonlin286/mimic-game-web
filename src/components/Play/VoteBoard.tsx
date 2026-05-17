@@ -41,7 +41,7 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
         return "/images/win-two.webp";
       case "The Agents":
         return "/images/win-one.webp";
-      case "The Unknown Origin Got Caught":
+      case "":
         return "/images/agent-jellyfish-caught.webp";
       case "The Saboteur":
         return "/images/agent-octopus.webp";
@@ -142,31 +142,33 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
     })
 
     socket.on("listen-game-blind-got-caught", () => {
+      setWinStatus("The Unknown Origin Got Caught");
       setGuessWordModal(true);
     })
 
     socket.on("listen-game-blind-guess-the-word-correctly", () => {
       setGuessWordModal(false);
-      setWinStatus("blind");
+      setWinStatus("The Unknown Origin");
     })
 
     socket.on("listen-game-blind-guess-the-word-incorrectly", (response: GameBlindGuessTheWordIncorrectlyResponse) => {
       const { outcomeMessage, room } = response.data;
       switch (outcomeMessage) {
         case "Majority is the winner":
-          setWinStatus("majority");
+          setWinStatus("The Agents");
           break;
         case "Blind is the winner":
-          setWinStatus("blind");
+          setWinStatus("The Unknown Origin");
           break;
         case "Minority is the winner":
-          setWinStatus("minority");
+          setWinStatus("The Shifter");
           break;
         default:
           setWinStatus("none");
           break;
       }
       setGuessWordModal(false);
+      setToast("Wrong guess!", "error");
       setRoom(room);
     })
 
@@ -241,6 +243,7 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
     if (guessWord.length < 3) {
       return;
     }
+    console.log("submitGuessWord", guessWord);
     socket.emit("game:blind-guess-the-word", {
       roomId,
       playerEmail: session.user.email,
@@ -325,9 +328,9 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
               </>
             ) : winStatus !== null && winStatus !== "none" ? (
               <>
-                {winStatus === "blind-caught" ? (
+                {winStatus === "The Unknown Origin Got Caught" ? (
                   <p className="text-lg text-center font-bold">
-                    The blind got caught!
+                    The Unknown Origin got caught!
                   </p>
                 ) : (
                   <>
@@ -348,14 +351,14 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
                       <span>
                         The correct password was:&nbsp;
                         <strong>
-                          {gameData?.wordPairList[0].majorityWord}
+                          {gameData?.wordPairList?.[0]?.majorityWord}
                         </strong>
                       </span>
                       <br />
                       <span>
                         The fake password was:&nbsp;
                         <strong>
-                          {gameData?.wordPairList[0].minorityWord}
+                          {gameData?.wordPairList?.[0]?.minorityWord}
                         </strong>
                       </span>
                     </p>
@@ -370,7 +373,7 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
               </>
             ) : (
               <>
-                <p className="text-lg text-center font-bold">
+                <p className="text-xl text-center font-fredoka font-bold">
                   No winner yet!
                   <br />
                   Vote result is tied!
@@ -380,13 +383,13 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
                     {superpowerTriggered}
                   </p>
                 )}
-                <p>
+                <ul className="flex flex-col gap-2 justify-center items-center list-decimal pl-4">
                   {gameData?.players?.filter((player: PlayerWithRole) => !player.isAlive).map((player: PlayerWithRole) => (
-                    <span key={player.playerEmail} className="text-zinc-500 text-sm line-through block">
-                      {player.playerName}
-                    </span>
+                    <li key={player.playerEmail} className="text-white">
+                      <strong className="font-semibold">{player.playerName}</strong> Eliminated
+                    </li>
                   ))}
-                </p>
+                </ul>
                 {isHost && (
                   <Button variant="primary" size="md" onClick={continueGame} className="w-full">Continue</Button>
                 )}

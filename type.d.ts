@@ -30,6 +30,8 @@ interface PlayerWithRole {
   playerEmail: string;
   gameRole: string;
   gameWord: string;
+  superpower?: Superpower;
+  hasUsedSuperpower?: boolean;
   voters?: Partial<PlayerWithRole>[];
   isAlive: boolean;
 }
@@ -145,7 +147,7 @@ interface RoomState {
   isPublic: boolean;
   createdAt: Date;
   updatedAt: Date;
-  setRoom: (room: RoomResponseData) => void;
+  setRoom: (room: Partial<RoomResponseData>) => void;
   resetRoom: () => void;
 }
 

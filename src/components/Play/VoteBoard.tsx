@@ -4,19 +4,28 @@ import { CircleCheck } from "lucide-react";
 import Image from "next/image";
 
 import { useRoomStore } from "@/store/room-state";
+import { useToastStore } from "@/store/toast-state";
 import useSocket from "@/hooks/useSocket";
 import Button from "@/components/Button";
 import Modal from "@/components/Modal";
 import Input from "../Input";
+import Checkbox from "../Checkbox";
 import RestartBtn from "@/components/Play/RestartBtn";
+import InfoPopover from "../InfoPopover";
 
-export default function VoteBoard() {
+interface VoteBoardProps {
+  playerSuperpower: Superpower;
+}
+
+export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
   const [voteModal, setVoteModal] = useState(false);
+  const [isPassivePowerActivated, setIsPassivePowerActivated] = useState<boolean>(false);
   const [guessWordModal, setGuessWordModal] = useState(false);
   const [guessWord, setGuessWord] = useState<string>("");
   const [allVoted, setAllVoted] = useState<boolean>(false);
   const [winStatus, setWinStatus] = useState<string | null>(null);
   const [superpowerTriggered, setSuperpowerTriggered] = useState<string | null>(null);
+  const { setToast } = useToastStore();
   const { socket } = useSocket();
   const { data: session } = useSession();
   const { roomId, roomPlayers, gameData, setRoom } = useRoomStore();
@@ -41,30 +50,68 @@ export default function VoteBoard() {
     }
   }
 
+  const activatedPassiveSuperpower = useCallback((superpowerName: string, value: boolean) => {
+    console.log("activatedPassiveSuperpower", superpowerName, value);
+    if (!socket) return;
+    setIsPassivePowerActivated(value);
+    socket.emit("superpower:use-passive-power", {
+      playerEmail: session?.user?.email,
+      roomId,
+      powerName: superpowerName,
+      isActive: value,
+    }).on("use-passive-power-failed", (response) => {
+      // console.log('activate-passive-power-failed', response);
+      setToast(response.message, "error");
+      setIsPassivePowerActivated(false);
+    }).on("use-passive-power-success", (response) => {
+      // console.log("use-passive-power-success", response);
+      setToast(response.message, "success");
+    })
+  }, [socket, roomId, session, setToast])
+
+  useEffect(() => {
+    if (!playerSuperpower) return;
+    if (playerSuperpower.type === "passive" && playerSuperpower.name === 'saboteur') {
+      setIsPassivePowerActivated(true);
+      activatedPassiveSuperpower(playerSuperpower.name, true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playerSuperpower])
+
   useEffect(() => {
     if (!socket) return;
     socket.on("listen-game-start-vote", (response) => {
-      console.log("listen-game-start-vote", response);
+      // console.log("listen-game-start-vote", response);
       setVoteModal(true);
       setRoom(response.data);
     });
 
     socket.on("listen-game-vote-response", (response) => {
-      console.log("listen-game-vote-response", response);
+      // console.log("listen-game-vote-response", response);
       setRoom(response.data);
     })
 
     socket.on("listen-game-all-players-voted", () => {
-      console.log("listen-game-all-players-voted");
+      // console.log("listen-game-all-players-voted");
       setAllVoted(true);
     })
 
     socket.on("listen-game-calculate-results-failed", (response) => {
-      console.log("listen-game-calculate-results-failed", response);
+      // console.log("listen-game-calculate-results-failed", response);
+      setToast(response.message, "error");
+      setIsPassivePowerActivated(false);
+    })
+
+    socket.on("listen-game-calculate-results-player", (response) => {
+      console.log("listen-game-calculate-results-player", response);
+      setRoom({
+        ...response.data.room,
+      })
     })
 
     socket.on("listen-game-calculate-results", (response) => {
-      console.log("listen-game-calculate-results", response);
+      // console.log("listen-game-calculate-results", response);
+      setIsPassivePowerActivated(false);
       const { message, data } = response;
       switch (message) {
         case "Minority is the winner":
@@ -90,16 +137,16 @@ export default function VoteBoard() {
     })
 
     socket.on("listen-game-superpower-triggered", (response) => {
-      console.log("listen-game-superpower-triggered", response);
+      // console.log("listen-game-superpower-triggered", response);
       const { triggeredEffects } = response.data
       triggeredEffects.forEach((effect: { playerEmail: string, playerName: string, power: string }) => {
         console.log("effect", effect);
         switch (effect.power) {
           case "chief":
-            setSuperpowerTriggered(`Executive Override! The Chief pulled rank to break the tie.`)
+            setSuperpowerTriggered(`${effect.playerName} The Chief pulled rank to break the tie.`)
             break;
           case "briber":
-            setSuperpowerTriggered(`Money talks! Someone was bought off. One vote disappeared.`)
+            setSuperpowerTriggered(`${effect.playerName}'s money talk! Someone was bought off. One vote disappeared.`)
             break;
         }
       })
@@ -137,7 +184,7 @@ export default function VoteBoard() {
     })
 
     socket.on("listen-game-continue-success", (response) => {
-      console.log("listen game-continue-success", response);
+      // console.log("listen game-continue-success", response);
       setRoom(response.data);
       setVoteModal(false);
       setGuessWordModal(false);
@@ -168,7 +215,7 @@ export default function VoteBoard() {
       setGuessWord("");
       setSuperpowerTriggered(null);
     })
-  }, [socket, setRoom, gameData, session]);
+  }, [socket, setRoom, gameData, session, isPassivePowerActivated, setToast]);
 
   const voteRequest = useCallback(() => {
     if (!session?.user?.email || !socket || !roomId) return;
@@ -197,10 +244,15 @@ export default function VoteBoard() {
     socket.emit("game:calculate-results", {
       roomId,
       playerEmail: session.user.email,
+      usePassivePower: isPassivePowerActivated,
+      passivePowerName: playerSuperpower?.name,
+      passivePowerOwnerEmail: session?.user?.email,
     }).on("game-calculate-results-failed", (response) => {
       console.log("game-calculate-results-failed", response);
+      setToast(response.message, "error");
+      setIsPassivePowerActivated(false);
     })
-  }, [socket, roomId, session])
+  }, [socket, roomId, session, isPassivePowerActivated, playerSuperpower, setToast])
 
   const submitGuessWord = useCallback(() => {
     if (!session?.user?.email || !socket || !roomId) return;
@@ -222,8 +274,10 @@ export default function VoteBoard() {
       roomId,
     }).on("game-continue-failed", (response) => {
       console.log("game-continue-failed", response);
+      setToast(response.message, "error");
+      setIsPassivePowerActivated(false);
     });
-  }, [socket, roomId, session])
+  }, [socket, roomId, session, setToast])
 
   // replay the game using the same game rules
   const replayGame = useCallback(() => {
@@ -246,30 +300,40 @@ export default function VoteBoard() {
           <div className="flex flex-col gap-2">
             {winStatus === null ? (
               <>
-                <ol className="flex flex-col gap-4 border-t border-zinc-300 py-2">
+                <ol className="flex flex-col gap-4 border-t border-zinc-300 py-4">
                   {gameData?.players?.map((player: PlayerWithRole) => (
-                    <li key={player.playerEmail} className="flex items-center justify-between gap-2">
-                      <strong className={`font-fredoka text-xl capitalize ${player.isAlive ? 'text-white' : 'text-zinc-500 line-through'}`}>
+                    <li key={player.playerEmail} className="grid grid-cols-3 items-center gap-4">
+                      <strong className={`font-fredoka text-xl capitalize text-nowrap text-ellipsis overflow-hidden ${player.isAlive ? 'text-white' : 'text-zinc-500 line-through'}`}>
                         {player.playerName}
                       </strong>
-                      <ul className="flex flex-col">
+                      <ul className="flex-1">
                         {player.voters?.map((voter, index) => (
-                          <li key={index} className="text-xs text-zinc-500">
+                          <li key={index} className="text-xs text-white">
                             {voter.playerName}
                           </li>
                         ))}
                       </ul>
-                      {player.playerEmail !== session?.user?.email ? (
-                        <>
-                          {player.voters?.some((voter) => voter.playerEmail === session?.user?.email) ? (
-                            <CircleCheck className="w-6 h-6 text-green-500" />
-                          ) : isAlive && player.isAlive && (
-                            <Button variant="primary" size="sm" onClick={() => voteHandler(player.playerEmail)}>Vote</Button>
-                          )}
-                        </>
-                      ) : (
-                        <span />
-                      )}
+                      <div className="flex justify-end items-center">
+                        {player.playerEmail !== session?.user?.email ? (
+                          <>
+                            {player.voters?.some((voter) => voter.playerEmail === session?.user?.email) ? (
+                              <CircleCheck className="w-6 h-6 text-green-500" />
+                            ) : isAlive && player.isAlive && (
+                              <Button variant="primary" size="sm" onClick={() => voteHandler(player.playerEmail)}>Vote</Button>
+                            )}
+                          </>
+                        ) : player.isAlive ? (
+                          <>
+                            {playerSuperpower && playerSuperpower.type === 'passive' && playerSuperpower.name !== "agent" && (
+                              <div className="flex items-center">
+                                <InfoPopover text={<>{playerSuperpower.description} {player.hasUsedSuperpower ? <span className="text-red-500">(already used)</span> : ''}</>} />
+                                &nbsp;
+                                <Checkbox id={playerSuperpower.name} label={`use ${playerSuperpower.name}`} color="secondary" checked={isPassivePowerActivated} disabled={player.hasUsedSuperpower} readonly={playerSuperpower.name === 'saboteur'} onChange={(value) => activatedPassiveSuperpower(playerSuperpower.name, value)} />
+                              </div>
+                            )}
+                          </>
+                        ) : null}
+                      </div>
                     </li>
                   ))}
                 </ol>

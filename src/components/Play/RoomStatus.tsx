@@ -23,7 +23,10 @@ export default function PlayRoomStatus({ isHost }: PlayRoomStatusProps) {
   }, [setToast]);
 
   const emitLeave = useCallback(() => {
-    if (!socket.connected || !socket.id || !roomId) return;
+    if (!socket.connected || !socket.id || !roomId) {
+      router.push("/");
+      return;
+    };
     const payload: RoomLeavePayload = {
       roomId: roomId,
       socketId: socket.id,

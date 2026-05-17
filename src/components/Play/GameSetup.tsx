@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Wrench } from "lucide-react";
 
 import { useRoomStore } from "@/store/room-state";
+import { useToastStore } from "@/store/toast-state";
 import useSocket from "@/hooks/useSocket";
 import Panel from "@/components/Panel";
 import Modal from "@/components/Modal";
@@ -28,6 +28,7 @@ export default function PlayGameSetup({ isHost }: PlayGameSetupProps) {
     category: "",
     language: "en",
   });
+  const { setToast } = useToastStore();
   const { socket } = useSocket();
   const { roomId, roomPlayers, gameRule, setRoom, resetRoom } = useRoomStore();
   
@@ -35,10 +36,10 @@ export default function PlayGameSetup({ isHost }: PlayGameSetupProps) {
     if (!socket) return;
     
     socket.on("listen-game-rule-update-success", (response: GameRuleUpdateResponse) => {
-      console.log(response)
+      setToast("Game rule updated", "success");
       setRoom(response.data as RoomResponseData);
     });
-  }, [socket, setRoom]);
+  }, [socket, setRoom, setToast]);
 
   useEffect(() => {
     setSetupFormData({

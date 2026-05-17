@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import { InfoIcon } from "lucide-react";
 
 const MARGIN = 8;
@@ -9,7 +10,7 @@ const MAX_POPOVER_W = 320; // max-w-xs
 
 interface InfoPopoverProps {
   label?: string;
-  text: string;
+  text: React.ReactNode;
 }
 
 export default function InfoPopover({ label, text }: InfoPopoverProps) {
@@ -17,11 +18,19 @@ export default function InfoPopover({ label, text }: InfoPopoverProps) {
   const btnRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const isInsideTrigger = ref.current?.contains(target);
+      const isInsidePopover = popoverRef.current?.contains(target);
+      if (!isInsideTrigger && !isInsidePopover) {
         setIsOpen(false);
       }
     };
@@ -71,10 +80,10 @@ export default function InfoPopover({ label, text }: InfoPopoverProps) {
       <button ref={btnRef} type="button" onClick={() => setIsOpen(!isOpen)} className="cursor-pointer">
         <InfoIcon className="w-5 h-5 text-mint hover:text-mint-hover" />
       </button>
-      {isOpen && (
+      {isMounted && isOpen && createPortal(
         <div
           ref={popoverRef}
-          className="fixed z-40 max-w-xs rounded-2xl border-2 border-black bg-light-navy p-2 shadow-lg"
+          className="fixed z-50 max-w-xs rounded-2xl border-2 border-black bg-light-navy p-2 shadow-lg"
           style={{
             top: pos.top,
             left: pos.left,
@@ -82,7 +91,8 @@ export default function InfoPopover({ label, text }: InfoPopoverProps) {
           }}
         >
           <p className="text-sm font-nunito">{text}</p>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -29,20 +29,20 @@ export default function PlayGame() {
   const [overlayMessage, setOverlayMessage] = useState<OverlayMessage | null>(null);
   const { data: session } = useSession();
   const { socket } = useSocket();
-  const { roomId, gameData, setRoom } = useRoomStore();
+  const { roomId, gameData } = useRoomStore();
   const { setToast } = useToastStore();
 
   useEffect(() => {
     if (!socket) return;
 
     socket.on("listen-game-initialized-player", (response) => {
-      // console.log('listen-game-initialized-player', response)
+      console.log(response.data.gameWord, response.data.superpower);
       setGameWord(response.data.gameWord);
       setSuperpower(response.data.superpower ?? null);
     })
 
     socket.on("use-superpower-interrogator", (response) => {
-      console.log('use-superpower-interrogator', response)
+      // console.log('use-superpower-interrogator', response)
       setSuperpowerModal(true);
       setSuperpowerOptions(response.data);
     })
@@ -63,16 +63,14 @@ export default function PlayGame() {
     socket.on("listen-interrogator-pick-target-success", (response) => {
       setActiveSuperpower(response.data.superpowerName);
       setOverlayMessage(response.data);
-      // const timeout = setTimeout(() => {
-      //   setSuperpowerOptions([]);
-      //   setActiveSuperpower(null);
-      //   socket.emit("game:hide-overlay", roomId);
-      //   clearTimeout(timeout);
-      // }, 5000);
+      setSuperpower((prev) => ({
+        ...(prev as Superpower),
+        isUsed: true,
+      }))
     })
 
     socket.on("use-superpower-detective", (response) => {
-      console.log('use-superpower-detective', response)
+      // console.log('use-superpower-detective', response)
       setSuperpowerModal(true);
       setSuperpowerOptions(response.data);
       setSuperpower((prev) => ({
@@ -82,7 +80,7 @@ export default function PlayGame() {
     })
 
     socket.on("use-superpower-wiretapper", (response) => {
-      console.log('use-superpower-wiretapper', response)
+      // console.log('use-superpower-wiretapper', response)
       setSuperpowerModal(true);
       setSuperpowerOptions(response.data);
       setSuperpower((prev) => ({
@@ -105,12 +103,21 @@ export default function PlayGame() {
       setToast(response.message, "error");
     })
 
-    socket.on("listen-hide-overlay-success", (response) => {
-      console.log('listen-hide-overlay-success', response)
+    socket.on("activate-passive-power-success", (response) => {
+      const { activated } = response.data;
+      setToast(response.message, "success");
+      setSuperpower((prev) => ({
+        ...(prev as Superpower),
+        isUsed: activated,
+      }))
+    })
+
+    socket.on("listen-hide-overlay-success", () => {
+      // console.log('listen-hide-overlay-success', response)
       setOverlay(false);
       setOverlayMessage(null);
     })
-  }, [socket, roomId, setRoom, setToast, setOverlay, setOverlayMessage, setActiveSuperpower, setSuperpowerOptions]);
+  }, [socket, roomId, setToast, setOverlay, setOverlayMessage, setActiveSuperpower, setSuperpowerOptions]);
 
   const handleInterrogatorPickTarget = useCallback((targetPlayerEmail: string) => {
     if (!socket || !roomId || !targetPlayerEmail) return;
@@ -137,7 +144,7 @@ export default function PlayGame() {
         </CardStack>
       ) : <></>}
       <div className="flex flex-col justify-center items-center">
-        <VoteBoard />
+        <VoteBoard playerSuperpower={superpower as Superpower} />
       </div>
       {overlay && (
         <div className="fixed inset-0 flex justify-center items-center bg-black/50 backdrop-blur-xl z-40">
@@ -152,7 +159,7 @@ export default function PlayGame() {
           )}
         </div>
       )}
-      <Modal isOpen={superpowerModal} onClose={() => setSuperpowerModal(false)}>
+      <Modal isOpen={superpowerModal} dismissible={false} onClose={() => setSuperpowerModal(false)}>
         <div className="flex flex-col gap-4">
           <h2 className="text-2xl font-bold">Choose a player</h2>
           <ul className="grid grid-cols-2 gap-2">
@@ -160,7 +167,7 @@ export default function PlayGame() {
               <li key={player.socketId}>
                 {activeSuperpower === 'interrogator' ? (
                   <div className="w-full h-full">
-                    <input type="radio" name="interrogator" id={player.playerName} value={player.playerName} onChange={() => handleInterrogatorPickTarget(player.playerEmail ?? "")} className="absolute opacity-0 w-0 h-0 peer" />
+                    <input type="radio" name="interrogator" id={player.playerName} value={player.playerName} disabled={superpower?.isUsed} onChange={() => handleInterrogatorPickTarget(player.playerEmail ?? "")} className="absolute opacity-0 w-0 h-0 peer" />
                     <label htmlFor={player.playerName} className="flex justify-center items-center w-full h-full font-fredoka font-bold text-white text-2xl text-center rounded-2xl shadow-lg bg-slate-500 peer-checked:bg-mint p-6">
                       {player.playerName}
                     </label>

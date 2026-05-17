@@ -22,10 +22,12 @@ export default function PlayPage() {
   const { roomId, roomPlayers, gameRule, setRoom, resetRoom } = useRoomStore();
   const { setToast } = useToastStore();
 
-  const isHost = useMemo(
-    () => roomPlayers.find((p) => p.playerEmail === session?.user?.email)?.role === "host",
-    [roomPlayers, session?.user?.email]
-  );
+  const isHost = useMemo(() => {
+    if (!roomPlayers) return
+    // console.log(roomPlayers)
+    // return true;
+    return roomPlayers.find((p) => p.playerEmail === session?.user?.email)?.role === "host";
+  }, [roomPlayers, session?.user?.email]);
 
   // Prevent the screen from sleeping during gameplay.
   useEffect(() => {
@@ -208,7 +210,7 @@ export default function PlayPage() {
 
   return (
     <Container className="py-4">
-      <RoomStatus isHost={isHost} />
+      <RoomStatus isHost={isHost ?? false} />
       {gameRule.status === "playing" ? (
         <PlayGame />
       ) : gameRule.status !== "finished" ? (

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react"
 
 import useSocket from "@/hooks/useSocket"
 import { useRoomStore } from "@/store/room-state"
@@ -38,6 +39,7 @@ export default function ModalCreate({ isOpen, onClose, playerName, playerEmail }
     isPublic: false,
   })
   const [createRoomError, setCreateRoomError] = useState<CreateRoomError | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const { socket, isConnected, socketConnect, socketDisconnect } = useSocket();
   const { setRoom } = useRoomStore();
   const { setToast } = useToastStore();
@@ -53,6 +55,7 @@ export default function ModalCreate({ isOpen, onClose, playerName, playerEmail }
     if (!isConnected) {
       socketConnect();
     }
+    setIsLoading(true);
     const { playerName, roomMaxPlayers, isPublic } = createRoomFormData;
     setCreateRoomError(null);
     const sanitizedPlayerName = playerName.replace(/[^a-zA-Z0-9 ]/g, "").substring(0, 15);
@@ -78,7 +81,7 @@ export default function ModalCreate({ isOpen, onClose, playerName, playerEmail }
           createdAt: data.createdAt,
           updatedAt: data.updatedAt,
         } as RoomResponseData);
-        onClose();
+        // onClose();
         router.push(`/play/${data.roomId}`);
       })
       .on("room-create-failed", (response: RoomCreateResponse) => {
@@ -102,7 +105,7 @@ export default function ModalCreate({ isOpen, onClose, playerName, playerEmail }
         }
         socketDisconnect();
       });
-  }, [playerEmail, isConnected, createRoomFormData, createRoomError, socket, socketConnect, socketDisconnect, setRoom, router, setToast, onClose]);
+  }, [playerEmail, isConnected, createRoomFormData, createRoomError, socket, socketConnect, socketDisconnect, setRoom, router, setToast]);
 
   const formValidation = useCallback(() => {
     setCreateRoomError(null);
@@ -137,7 +140,9 @@ export default function ModalCreate({ isOpen, onClose, playerName, playerEmail }
         <Input type="text" label="Agent Code" placeholder="Six Seven Eight" value={createRoomFormData.playerName} autoFocus={true} onChange={(e) => setCreateRoomFormData({ ...createRoomFormData, playerName: e.target.value })} error={createRoomError?.playerName} />
         <InputNumber label="Max Players" min={3} max={10} value={createRoomFormData.roomMaxPlayers.toString()} onChange={(value) => setCreateRoomFormData({ ...createRoomFormData, roomMaxPlayers: parseInt(value) > 0 ? parseInt(value) : 3 })} error={createRoomError?.roomMaxPlayers} />
         <SwitchInput id="room-public" labelLeft="Offline" labelRight="Online" checked={createRoomFormData.isPublic} onCheckedChange={(checked) => setCreateRoomFormData({ ...createRoomFormData, isPublic: checked })} className="w-fit" />
-        <Button onClick={formValidation}>Create Room</Button>
+        <Button disabled={isLoading} onClick={formValidation}>
+          {isLoading ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : "Create Room"}
+        </Button>
       </div>
     </Modal>
   )

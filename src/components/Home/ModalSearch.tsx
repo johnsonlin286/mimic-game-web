@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { useMutation } from "@tanstack/react-query"
+import { Loader2 } from "lucide-react"
 
 import { searchRoom } from "@/services/rooms"
 import useSocketJoin from "@/hooks/useSocketJoin"
@@ -39,6 +40,7 @@ export default function ModalSearch({ isOpen, onClose, roomId, playerName, playe
     playerName: "",
     playerEmail: "",
   })
+  const [isLoading, setIsLoading] = useState(false);
   const [modalFormError, setModalFormError] = useState<ModalFormError | null>(null);
   const { joinRoom, joinRoomError } = useSocketJoin()
 
@@ -52,6 +54,9 @@ export default function ModalSearch({ isOpen, onClose, roomId, playerName, playe
 
   const { mutate: searchRoomMutation, isPending } = useMutation({
     mutationFn: searchRoom,
+    onMutate: () => {
+      setIsLoading(true);
+    },
     onSuccess: () => {
       const playerAvatar = randomAvatar();
       joinRoom(modalFormData.roomId, modalFormData.playerEmail, modalFormData.playerName, playerAvatar);
@@ -104,8 +109,8 @@ export default function ModalSearch({ isOpen, onClose, roomId, playerName, playe
         {joinRoomError && <p className="text-red-500">{joinRoomError}</p>}
         <Input type="text" label="Room ID" placeholder="Input Room ID" value={modalFormData.roomId} onChange={(e) => handleFormChange({ key: "roomId", value: e.target.value })} error={modalFormError?.roomId} inputClassName="uppercase text-center"/>
         <Input type="text" label="Agent Code" placeholder="Six Seven Eight" value={modalFormData.playerName} autoFocus={true} onChange={(e) => handleFormChange({ key: "playerName", value: e.target.value })} error={modalFormError?.playerName} inputClassName="text-center" />
-        <Button variant="success" onClick={handlerRoomValidation} disabled={isPending}>
-          Join Room
+        <Button variant="success" onClick={handlerRoomValidation} disabled={isPending || isLoading}>
+          {isPending || isLoading ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : "Join Room"}
         </Button>
       </div>
     </Modal>

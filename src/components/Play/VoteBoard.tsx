@@ -102,7 +102,6 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
     })
 
     socket.on("listen-game-calculate-results", (response) => {
-      setIsPassivePowerActivated(false);
       const { message, data } = response;
       switch (message) {
         case "Minority is the winner":
@@ -173,13 +172,17 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
     })
 
     socket.on("listen-game-continue-success", (response) => {
-      setRoom(response.data);
+      setRoom(response.data.room);
       setVoteModal(false);
       setGuessWordModal(false);
       setAllVoted(false);
       setWinStatus(null);
       setGuessWord("");
       setSuperpowerTriggered(null);
+      setIsPassivePowerActivated(false);
+      if (playerSuperpower && playerSuperpower.type === 'passive' && playerSuperpower.name === 'saboteur') {
+        activatedPassiveSuperpower(playerSuperpower.name, true);
+      }
     })
 
     socket.on("listen-game-restart-success", (response) => {
@@ -201,7 +204,8 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
       setGuessWord("");
       setSuperpowerTriggered(null);
     })
-  }, [socket, setRoom, gameData, session, isPassivePowerActivated, setToast]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socket, setRoom, gameData, session, setToast, playerSuperpower]);
 
   const voteRequest = useCallback(() => {
     if (!session?.user?.email || !socket || !roomId) return;
@@ -310,7 +314,7 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
                               <div className="flex items-center">
                                 <InfoPopover text={<>{playerSuperpower.description} {player.hasUsedSuperpower ? <span className="text-red-500">(already used)</span> : ''}</>} />
                                 &nbsp;
-                                <Checkbox id={playerSuperpower.name} label={`use ${playerSuperpower.name}`} color="secondary" checked={isPassivePowerActivated} disabled={player.hasUsedSuperpower} readonly={playerSuperpower.name === 'saboteur'} onChange={(value) => activatedPassiveSuperpower(playerSuperpower.name, value)} />
+                                <Checkbox id={playerSuperpower.name} label={`use ${playerSuperpower.name}`} color="secondary" checked={playerSuperpower.name === 'saboteur' ? true : isPassivePowerActivated} disabled={player.hasUsedSuperpower} readonly={playerSuperpower.name === 'saboteur'} onChange={(value) => activatedPassiveSuperpower(playerSuperpower.name, value)} />
                               </div>
                             )}
                           </>

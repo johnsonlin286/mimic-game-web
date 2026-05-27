@@ -36,13 +36,18 @@ export default function CardStack({
 
   useEffect(() => {
     if (!socket) return;
-    socket.on("listen-game-restart-success", () => {
-      setActiveIndex(0);
-    })
 
-    socket.on("listen-game-initialize-success", () => {
+    const resetActiveIndex = () => {
       setActiveIndex(0);
-    })
+    }
+
+    socket.on("listen-game-restart-success", resetActiveIndex);
+    socket.on("listen-game-initialize-success", resetActiveIndex);
+
+    return () => {
+      socket.off("listen-game-restart-success", resetActiveIndex);
+      socket.off("listen-game-initialize-success", resetActiveIndex);
+    };
   }, [socket]);
 
   const syncOffset = useCallback((v: number) => {

@@ -34,11 +34,17 @@ export default function PlayGameSetup({ isHost }: PlayGameSetupProps) {
   
   useEffect(() => {
     if (!socket) return;
-    
-    socket.on("listen-game-rule-update-success", (response: GameRuleUpdateResponse) => {
+
+    const handleGameRuleUpdateSuccess = (response: GameRuleUpdateResponse) => {
       setToast("Game rule updated", "success");
       setRoom(response.data as RoomResponseData);
-    });
+    };
+    
+    socket.on("listen-game-rule-update-success", handleGameRuleUpdateSuccess);
+
+    return () => {
+      socket.off("listen-game-rule-update-success", handleGameRuleUpdateSuccess);
+    };
   }, [socket, setRoom, setToast]);
 
   useEffect(() => {

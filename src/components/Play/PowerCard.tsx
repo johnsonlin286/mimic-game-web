@@ -20,14 +20,17 @@ export default function PowerCard({ power }: PowerCardProps) {
 
   useEffect(() => {
     if (!socket) return;
-    socket.on("listen-game-restart-success", () => {
-      setIsFlipped(true);
-    })
 
-    socket.on("listen-game-initialize-success", () => {
-      setIsFlipped(true);
-    })
-  }, [socket])
+    const resetFlip = () => setIsFlipped(true);
+
+    socket.on("listen-game-restart-success", resetFlip);
+    socket.on("listen-game-initialize-success", resetFlip);
+
+    return () => {
+      socket.off("listen-game-restart-success", resetFlip);
+      socket.off("listen-game-initialize-success", resetFlip);
+    };
+  }, [socket]);
 
   const attrs = useLongPress(() => {
     setIsFlipped(!isFlipped);

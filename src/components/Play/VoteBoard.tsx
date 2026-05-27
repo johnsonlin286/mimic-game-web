@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { CircleCheck } from "lucide-react";
 import Image from "next/image";
@@ -17,8 +17,45 @@ interface VoteBoardProps {
   playerSuperpower: Superpower;
 }
 
+interface PassivePowerConfirmModalState {
+  isOpen: boolean;
+  type: 'chief' | 'briber' | 'saboteur' | 'agent' | null;
+}
+
+function getAlivePlayers(players: PlayerWithRole[]) {
+  return players.filter((player) => player.isAlive);
+}
+
+function countVotesCast(players: PlayerWithRole[]) {
+  return getAlivePlayers(players).reduce(
+    (sum, player) => sum + (player.voters?.length ?? 0),
+    0
+  );
+}
+
+function haveAllAlivePlayersVoted(players: PlayerWithRole[]) {
+  const aliveCount = getAlivePlayers(players).length;
+  return aliveCount > 0 && countVotesCast(players) >= aliveCount;
+}
+
+function isVoteResultTied(players: PlayerWithRole[]) {
+  const voteCounts = getAlivePlayers(players).map(
+    (player) => player.voters?.length ?? 0
+  );
+  if (voteCounts.length === 0) return false;
+
+  const maxVotes = Math.max(...voteCounts);
+  if (maxVotes === 0) return false;
+
+  return voteCounts.filter((count) => count === maxVotes).length >= 2;
+}
+
 export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
   const [voteModal, setVoteModal] = useState(false);
+  const [passivePowerConfirmModal, setPassivePowerConfirmModal] = useState<PassivePowerConfirmModalState>({
+    isOpen: false,
+    type: null,
+  });
   const [isPassivePowerActivated, setIsPassivePowerActivated] = useState<boolean>(false);
   const [guessWordModal, setGuessWordModal] = useState(false);
   const [guessWord, setGuessWord] = useState<string>("");
@@ -41,10 +78,8 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
         return "/images/win-two.webp";
       case "The Agents":
         return "/images/win-one.webp";
-      case "":
-        return "/images/agent-jellyfish-caught.webp";
       case "The Saboteur":
-        return "/images/agent-octopus.webp";
+        return "/images/win-three.webp";
       default:
         return "/images/agent-male.webp";
     }
@@ -61,118 +96,61 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
     }).on("use-passive-power-failed", (response) => {
       setToast(response.message, "error");
       setIsPassivePowerActivated(false);
+      setPassivePowerConfirmModal({ isOpen: false, type: null });
     }).on("use-passive-power-success", (response) => {
       setToast(response.message, "success");
+      setPassivePowerConfirmModal({ isOpen: false, type: null });
     })
   }, [socket, roomId, session, setToast])
 
+  const updatePassivePowerConfirmModal = useCallback(({ isOpen, type }: PassivePowerConfirmModalState) => {
+    setPassivePowerConfirmModal({ isOpen, type });
+  }, [])
+
+  const playerSuperpowerRef = useRef(playerSuperpower);
+  playerSuperpowerRef.current = playerSuperpower;
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
+  const isPassivePowerActivatedRef = useRef(isPassivePowerActivated);
+  isPassivePowerActivatedRef.current = isPassivePowerActivated;
+  const setRoomRef = useRef(setRoom);
+  setRoomRef.current = setRoom;
+  const setToastRef = useRef(setToast);
+  setToastRef.current = setToast;
+  const updatePassivePowerConfirmModalRef = useRef(updatePassivePowerConfirmModal);
+  updatePassivePowerConfirmModalRef.current = updatePassivePowerConfirmModal;
+  const activatedPassiveSuperpowerRef = useRef(activatedPassiveSuperpower);
+  activatedPassiveSuperpowerRef.current = activatedPassiveSuperpower;
+
   useEffect(() => {
     if (!playerSuperpower) return;
-    if (playerSuperpower.type === "passive" && playerSuperpower.name === 'saboteur') {
+    if (playerSuperpower.name === 'saboteur') {
       setIsPassivePowerActivated(true);
       activatedPassiveSuperpower(playerSuperpower.name, true);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playerSuperpower])
+  }, [playerSuperpower, activatedPassiveSuperpower])
 
   useEffect(() => {
     if (!socket) return;
-    socket.on("listen-game-start-vote", (response) => {
-      setVoteModal(true);
-      setRoom(response.data);
-    });
 
-    socket.on("listen-game-vote-response", (response) => {
-      setRoom(response.data);
-    })
-
-    socket.on("listen-game-all-players-voted", () => {
-      setAllVoted(true);
-    })
-
-    socket.on("listen-game-calculate-results-failed", (response) => {
-      setToast(response.message, "error");
-      setIsPassivePowerActivated(false);
-    })
-
-    socket.on("listen-game-calculate-results-player", (response) => {
-      setRoom({
-        ...response.data.room,
-      })
-    })
-
-    socket.on("listen-game-calculate-results", (response) => {
-      const { message, data } = response;
+    const mapOutcomeMessageToWinStatus = (message: string) => {
       switch (message) {
         case "Minority is the winner":
-          setWinStatus("The Shifter");
-          break;
+          return "The Shifter";
         case "Blind is the winner":
-          setWinStatus("The Unknown Origin");
-          break;
+          return "The Unknown Origin";
         case "Majority is the winner":
-          setWinStatus("The Agents");
-          break;
+          return "The Agents";
         case "Blind got caught!":
-          setWinStatus("The Unknown Origin Got Caught");
-          break;
+          return "The Unknown Origin Got Caught";
         case "Saboteur is the winner":
-          setWinStatus("The Saboteur");
-          break;
+          return "The Saboteur";
         default:
-          setWinStatus("none");
-          break;
+          return "none";
       }
-      setRoom(data);
-    })
+    };
 
-    socket.on("listen-game-superpower-triggered", (response) => {
-      const { triggeredEffects } = response.data
-      triggeredEffects.forEach((effect: { playerEmail: string, playerName: string, power: string }) => {
-        switch (effect.power) {
-          case "chief":
-            setSuperpowerTriggered(`${effect.playerName} The Chief pulled rank to break the tie.`)
-            break;
-          case "briber":
-            setSuperpowerTriggered(`${effect.playerName}'s money talk! Someone was bought off. One vote disappeared.`)
-            break;
-        }
-      })
-    })
-
-    socket.on("listen-game-blind-got-caught", () => {
-      setWinStatus("The Unknown Origin Got Caught");
-      setGuessWordModal(true);
-    })
-
-    socket.on("listen-game-blind-guess-the-word-correctly", () => {
-      setGuessWordModal(false);
-      setWinStatus("The Unknown Origin");
-    })
-
-    socket.on("listen-game-blind-guess-the-word-incorrectly", (response: GameBlindGuessTheWordIncorrectlyResponse) => {
-      const { outcomeMessage, room } = response.data;
-      switch (outcomeMessage) {
-        case "Majority is the winner":
-          setWinStatus("The Agents");
-          break;
-        case "Blind is the winner":
-          setWinStatus("The Unknown Origin");
-          break;
-        case "Minority is the winner":
-          setWinStatus("The Shifter");
-          break;
-        default:
-          setWinStatus("none");
-          break;
-      }
-      setGuessWordModal(false);
-      setToast("Wrong guess!", "error");
-      setRoom(room);
-    })
-
-    socket.on("listen-game-continue-success", (response) => {
-      setRoom(response.data.room);
+    const resetVoteBoardUi = () => {
       setVoteModal(false);
       setGuessWordModal(false);
       setAllVoted(false);
@@ -180,32 +158,170 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
       setGuessWord("");
       setSuperpowerTriggered(null);
       setIsPassivePowerActivated(false);
-      if (playerSuperpower && playerSuperpower.type === 'passive' && playerSuperpower.name === 'saboteur') {
-        activatedPassiveSuperpower(playerSuperpower.name, true);
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleGameStartVote = (response: any) => {
+      if (!response) return;
+      setVoteModal(true);
+      setRoomRef.current(response.data);
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleGameVoteResponse = (response: any) => {
+      if (!response) return;
+      setRoomRef.current(response.data);
+      const { gameData: { players } } = response.data;
+      const player = players.find(
+        (p: PlayerWithRole) => p.playerEmail === sessionRef.current?.user?.email
+      );
+      if (!player) return;
+      const superpower = playerSuperpowerRef.current;
+
+      if (superpower?.name === 'chief') {
+        if (player.hasUsedSuperpower) return;
+        if (
+          haveAllAlivePlayersVoted(players) &&
+          isVoteResultTied(players) &&
+          !isPassivePowerActivatedRef.current
+        ) {
+          updatePassivePowerConfirmModalRef.current({ isOpen: true, type: 'chief' });
+        }
+        return;
       }
-    })
 
-    socket.on("listen-game-restart-success", (response) => {
-      setRoom(response.data);
-      setVoteModal(false);
-      setGuessWordModal(false);
-      setAllVoted(false);
-      setWinStatus(null);
-      setGuessWord("");
-      setSuperpowerTriggered(null);
-    })
+      if (superpower?.name === 'briber') {
+        if (player.hasUsedSuperpower) return;
+        const voteCount = player.voters?.length ?? 0;
+        if (voteCount >= 2 && !isPassivePowerActivatedRef.current) {
+          updatePassivePowerConfirmModalRef.current({ isOpen: true, type: 'briber' });
+        }
+      }
+    };
 
-    socket.on("listen-game-initialize-success", (response) => {
-      setRoom(response.data);
-      setVoteModal(false);
+    const handleGameAllPlayersVoted = () => {
+      setAllVoted(true);
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleGameCalculateResultsFailed = (response: any) => {
+      if (!response) return;
+      setToastRef.current(response.message, "error");
+      setIsPassivePowerActivated(false);
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleGameCalculateResultsPlayer = (response: any) => {
+      if (!response) return;
+      setRoomRef.current({ ...response.data.room });
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleGameCalculateResults = (response: any) => {
+      if (!response) return;
+      setWinStatus(mapOutcomeMessageToWinStatus(response.message));
+      setRoomRef.current(response.data);
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleGameSuperpowerTriggered = (response: any) => {
+      if (!response) return;
+      const { triggeredEffects } = response.data;
+      triggeredEffects.forEach((effect: { playerEmail: string; playerName: string; power: string }) => {
+        switch (effect.power) {
+          case "chief":
+            setSuperpowerTriggered(`${effect.playerName} The Chief pulled rank to break the tie.`);
+            break;
+          case "briber":
+            setSuperpowerTriggered(`${effect.playerName}'s money talk! Someone was bought off. One vote disappeared.`);
+            break;
+        }
+      });
+    };
+
+    const handleGameBlindGotCaught = () => {
+      setWinStatus("The Unknown Origin Got Caught");
+      setGuessWordModal(true);
+    };
+
+    const handleGameBlindGuessTheWordCorrectly = () => {
       setGuessWordModal(false);
-      setAllVoted(false);
-      setWinStatus(null);
-      setGuessWord("");
-      setSuperpowerTriggered(null);
-    })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [socket, setRoom, gameData, session, setToast, playerSuperpower]);
+      setWinStatus("The Unknown Origin");
+    };
+
+    const handleGameBlindGuessTheWordIncorrectly = (response: GameBlindGuessTheWordIncorrectlyResponse) => {
+      if (!response) return;
+      const { outcomeMessage, room } = response.data;
+      setWinStatus(mapOutcomeMessageToWinStatus(outcomeMessage));
+      setGuessWordModal(false);
+      setToastRef.current("Wrong guess!", "error");
+      setRoomRef.current(room);
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleGameContinueSuccess = (response: any) => {
+      if (!response) return;
+      setRoomRef.current(response.data.room);
+      resetVoteBoardUi();
+      setIsPassivePowerActivated(false);
+      const superpower = playerSuperpowerRef.current;
+      if (superpower?.type === 'passive' && superpower.name === 'saboteur') {
+        activatedPassiveSuperpowerRef.current(superpower.name, true);
+      }
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleGameRestartSuccess = (response: any) => {
+      if (!response) return;
+      setRoomRef.current(response.data);
+      resetVoteBoardUi();
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleGameInitializeSuccess = (response: any) => {
+      if (!response) return;
+      setRoomRef.current(response.data);
+      resetVoteBoardUi();
+    };
+
+    socket.on("listen-game-start-vote", handleGameStartVote);
+    socket.on("listen-game-vote-response", handleGameVoteResponse);
+    socket.on("listen-game-all-players-voted", handleGameAllPlayersVoted);
+    socket.on("listen-game-calculate-results-failed", handleGameCalculateResultsFailed);
+    socket.on("listen-game-calculate-results-player", handleGameCalculateResultsPlayer);
+    socket.on("listen-game-calculate-results", handleGameCalculateResults);
+    socket.on("listen-game-superpower-triggered", handleGameSuperpowerTriggered);
+    socket.on("listen-game-blind-got-caught", handleGameBlindGotCaught);
+    socket.on("listen-game-blind-guess-the-word-correctly", handleGameBlindGuessTheWordCorrectly);
+    socket.on("listen-game-blind-guess-the-word-incorrectly", handleGameBlindGuessTheWordIncorrectly);
+    socket.on("listen-game-continue-success", handleGameContinueSuccess);
+    socket.on("listen-game-restart-success", handleGameRestartSuccess);
+    socket.on("listen-game-initialize-success", handleGameInitializeSuccess);
+
+    return () => {
+      socket.off("listen-game-start-vote", handleGameStartVote);
+      socket.off("listen-game-vote-response", handleGameVoteResponse);
+      socket.off("listen-game-all-players-voted", handleGameAllPlayersVoted);
+      socket.off("listen-game-calculate-results-failed", handleGameCalculateResultsFailed);
+      socket.off("listen-game-calculate-results-player", handleGameCalculateResultsPlayer);
+      socket.off("listen-game-calculate-results", handleGameCalculateResults);
+      socket.off("listen-game-superpower-triggered", handleGameSuperpowerTriggered);
+      socket.off("listen-game-blind-got-caught", handleGameBlindGotCaught);
+      socket.off("listen-game-blind-guess-the-word-correctly", handleGameBlindGuessTheWordCorrectly);
+      socket.off("listen-game-blind-guess-the-word-incorrectly", handleGameBlindGuessTheWordIncorrectly);
+      socket.off("listen-game-continue-success", handleGameContinueSuccess);
+      socket.off("listen-game-restart-success", handleGameRestartSuccess);
+      socket.off("listen-game-initialize-success", handleGameInitializeSuccess);
+    };
+  }, [socket]);
+
+  const confirmUsePassivePower = useCallback(() => {
+    if (!playerSuperpower?.name) return;
+    setIsPassivePowerActivated(true);
+    setPassivePowerConfirmModal({ isOpen: false, type: null });
+    // activatedPassiveSuperpower(playerSuperpower.name, true);
+    // updatePassivePowerConfirmModal({ isOpen: false, type: null });
+  }, [playerSuperpower])
 
   const voteRequest = useCallback(() => {
     if (!session?.user?.email || !socket || !roomId) return;
@@ -247,7 +363,6 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
     if (guessWord.length < 3) {
       return;
     }
-    console.log("submitGuessWord", guessWord);
     socket.emit("game:blind-guess-the-word", {
       roomId,
       playerEmail: session.user.email,
@@ -408,6 +523,28 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
           <div className="flex flex-col gap-2">
             <Input label="Guess the Word" value={guessWord} onChange={(e) => setGuessWord(e.target.value)} />
             <Button variant="primary" size="md" onClick={submitGuessWord}>Guess</Button>
+          </div>
+        </div>
+      </Modal>
+      <Modal isOpen={passivePowerConfirmModal.isOpen} dismissible={false} onClose={() => setPassivePowerConfirmModal({ isOpen: false, type: null })}>
+        <div className="flex flex-col gap-4">
+          <h2 className="text-2xl font-bold">Confirm Use of Passive Power</h2>
+          <p className="text-sm text-center">
+            {passivePowerConfirmModal.type === 'chief' && 'The vote result is tied, You are the Chief, will you use your superpower?'}
+            {passivePowerConfirmModal.type === 'briber' && 'You get two or more elimination votes, will you use your superpower?'}
+            {passivePowerConfirmModal.type === 'saboteur' && 'You are the Saboteur, will you use your superpower?'}
+          </p>
+          <div className="flex justify-between gap-4">
+            <Button
+              variant="warning"
+              size="sm"
+              onClick={() => {
+                updatePassivePowerConfirmModal({ isOpen: false, type: null });
+                setIsPassivePowerActivated(false);
+              }}
+              className="w-full"
+            >No</Button>
+            <Button variant="secondary" size="sm" onClick={confirmUsePassivePower} className="w-full">Yes</Button>
           </div>
         </div>
       </Modal>

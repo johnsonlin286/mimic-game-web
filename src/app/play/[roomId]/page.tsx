@@ -202,8 +202,8 @@ export default function PlayPage() {
       socketId: socket.id,
       playerEmail: session.user?.email,
     })
-      .on("room-rejoin-success", onSuccess)
-      .on("room-rejoin-not-found", onNotFound);
+      .once("room-rejoin-success", onSuccess)
+      .once("room-rejoin-not-found", onNotFound);
   }, [roomId, router, session, socket, isConnected, socketConnect, resetRoom, setToast, setRoom]);
 
   return (

@@ -39,7 +39,7 @@ export default function WordCard({ label, word, orientation = "portrait", onFlip
           <div className="absolute flex flex-col justify-between items-center w-full h-full backface-hidden rotate-y-180 bg-light-navy rounded-2xl shadow-lg p-6">
             <div className="flex-1 flex flex-col gap-3 justify-center items-center">
               {label ? <strong className="text-white text-2xl text-center font-fredoka font-bold">{label}</strong> : <Image src="/images/shift-logo.webp" alt="Game Logo" width={150} height={150} className="pointer-events-none"/>}
-              <p className="text-sm text-center text-zinc-100">
+              <p className="text-sm text-center text-white font-fredoka">
                 Tap and hold to reveal
               </p>
             </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 
 import { useSession } from "next-auth/react";
@@ -31,88 +31,118 @@ export default function PlayGame() {
   const { socket } = useSocket();
   const { roomId, gameData } = useRoomStore();
   const { setToast } = useToastStore();
+  const setToastRef = useRef(setToast);
+  setToastRef.current = setToast;
 
   useEffect(() => {
     if (!socket) return;
 
-    socket.on("listen-game-initialized-player", (response) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleGameInitializedPlayer = (response: any) => {
+      if (!response) return;
+      console.log("handleGameInitializedPlayer", response.data.gameWord, response.data.superpower);
       setGameWord(response.data.gameWord);
       setSuperpower(response.data.superpower ?? null);
-    })
+    };
 
-    socket.on("use-superpower-interrogator", (response) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleUseSuperpowerInterrogator = (response: any) => {
+      if (!response) return;
       setSuperpowerModal(true);
       setSuperpowerOptions(response.data);
-    })
+    };
 
-    socket.on("interrogator-pick-target-failed", (response) => {
-      setToast(response.message, "error");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleInterrogatorPickTargetFailed = (response: any) => {
+      if (!response) return;
+      setToastRef.current(response.message, "error");
       setOverlayMessage(response.data);
-    })
+    };
 
-    socket.on("interrogator-pick-target-success", (response) => {
-      setToast(response.message, "success");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleInterrogatorPickTargetSuccess = (response: any) => {
+      if (!response) return;
+      setToastRef.current(response.message, "success");
       setSuperpower((prev) => ({
         ...(prev as Superpower),
         isUsed: true,
-      }))
-    })
+      }));
+    };
 
-    socket.on("listen-interrogator-pick-target-success", (response) => {
-      setActiveSuperpower(response.data.superpowerName);
-      setOverlayMessage(response.data);
-      setSuperpower((prev) => ({
-        ...(prev as Superpower),
-        isUsed: true,
-      }))
-    })
-
-    socket.on("use-superpower-detective", (response) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleUseSuperpowerDetective = (response: any) => {
+      if (!response) return;
       setSuperpowerModal(true);
       setSuperpowerOptions(response.data);
       setSuperpower((prev) => ({
         ...(prev as Superpower),
         isUsed: true,
-      }))
-    })
+      }));
+    };
 
-    socket.on("use-superpower-wiretapper", (response) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleUseSuperpowerWiretapper = (response: any) => {
+      if (!response) return;
       setSuperpowerModal(true);
       setSuperpowerOptions(response.data);
       setSuperpower((prev) => ({
         ...(prev as Superpower),
         isUsed: true,
-      }))
-    })
+      }));
+    };
 
-    socket.on("listen-use-superpower-success", (response) => {
-      setToast(response.message, "success");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleUseSuperpowerSuccess = (response: any) => {
+      if (!response) return;
+      setToastRef.current(response.message, "success");
       setActiveSuperpower(response.data.superpowerName);
       setOverlayMessage({
         superpowerName: response.data.superpowerName,
         message: response.message,
-      })
+      });
       setOverlay(true);
-    })
+    };
 
-    socket.on("use-superpower-failed", (response) => {
-      setToast(response.message, "error");
-    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleUseSuperpowerFailed = (response: any) => {
+      if (!response) return;
+      setToastRef.current(response.message, "error");
+    };
 
-    socket.on("activate-passive-power-success", (response) => {
-      const { activated } = response.data;
-      setToast(response.message, "success");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleActivatePassivePowerSuccess = (response: any) => {
+      if (!response) return;
+      setToastRef.current(response.message, "success");
       setSuperpower((prev) => ({
         ...(prev as Superpower),
-        isUsed: activated,
-      }))
-    })
+        isUsed: response.data.activated,
+      }));
+    };
 
-    socket.on("listen-hide-overlay-success", () => {
+    const handleHideOverlaySuccess = () => {
       setOverlay(false);
       setOverlayMessage(null);
-    })
-  }, [socket, roomId, setToast, setOverlay, setOverlayMessage, setActiveSuperpower, setSuperpowerOptions]);
+    };
+
+    const events: [string, (...args: unknown[]) => void][] = [
+      ["listen-game-initialized-player", handleGameInitializedPlayer],
+      ["use-superpower-interrogator", handleUseSuperpowerInterrogator],
+      ["interrogator-pick-target-failed", handleInterrogatorPickTargetFailed],
+      ["interrogator-pick-target-success", handleInterrogatorPickTargetSuccess],
+      ["use-superpower-detective", handleUseSuperpowerDetective],
+      ["use-superpower-wiretapper", handleUseSuperpowerWiretapper],
+      ["listen-use-superpower-success", handleUseSuperpowerSuccess],
+      ["use-superpower-failed", handleUseSuperpowerFailed],
+      ["activate-passive-power-success", handleActivatePassivePowerSuccess],
+      ["listen-hide-overlay-success", handleHideOverlaySuccess],
+    ];
+
+    events.forEach(([event, handler]) => socket.on(event, handler));
+
+    return () => {
+      events.forEach(([event, handler]) => socket.off(event, handler));
+    };
+  }, [socket]);
 
   const handleInterrogatorPickTarget = useCallback((targetPlayerEmail: string) => {
     if (!socket || !roomId || !targetPlayerEmail) return;

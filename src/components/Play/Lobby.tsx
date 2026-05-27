@@ -21,12 +21,12 @@ export default function PlayLobby() {
     socket.emit("game:start", {
       roomId,
       playerEmail: session.user.email,
-    }).on("game-start-failed", (response: GameStartErrorResponse) => {
+    }).once("game-start-failed", (response: GameStartErrorResponse) => {
       setToast(response.message, "error");
-    }).on("initialize-game", () => {
+    }).once("initialize-game", () => {
       socket.emit("game:initialize", {
         roomId,
-      }).on("game-initialize-failed", (response) => {
+      }).once("game-initialize-failed", (response) => {
         setToast(response.message, "error");
       });
     });

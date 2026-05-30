@@ -45,7 +45,7 @@ export default function RoomPlayers({ isHost }: RoomPlayersProps) {
       <ul className="flex flex-col gap-2.5">
         {roomPlayers.map((player, index) => (
           <li key={index} className="flex items-center justify-between gap-4 bg-slate-500 border-4 border-black rounded-2xl p-2.5">
-            <Image src={player.playerAvatar} alt={player.playerName} width={80} height={80} className="rounded-full border-4 border-black" />
+            <Image src={player.playerAvatar} alt={player.playerName} width={80} height={80} sizes="100vw" className="rounded-full border-4 border-black" />
             <h2 className="flex items-center gap-2 flex-1 font-fredoka font-bold text-2xl capitalize">
               {player.playerName}
               {player.role === "host" && <Star className="w-8 h-8 text-warning rotate-90" />}

@@ -56,7 +56,7 @@ export default function Home() {
         <GoogleLoginBtn />
       </div>
       <div className="flex flex-col items-center justify-center gap-4 w-full h-full">
-        <Image src="/images/shift-logo.webp" alt="Shift" width={0} height={0} sizes="100vw" priority className="w-full max-w-xs" />
+        <Image src="/images/morf-logo.webp" alt="morf-logo" width={0} height={0} sizes="100vw" priority className="w-full max-w-md" />
         <Panel className="w-full max-w-md">
           {!session && (
             <div className="flex justify-center w-full">
@@ -91,7 +91,7 @@ export default function Home() {
                 </p>
               </div>
               <div className="flex flex-col gap-2">
-                <small>mode:</small>
+                <small></small>
                 {room.isPublic ? <Button variant="primary" size="sm" disabled={room.gameRule.status === "playing" || room.gameRule.status === "finished"} onClick={() => handleJoinRoom(room.roomId)}>Join</Button> : <span >Offline</span>}
               </div>
             </div>

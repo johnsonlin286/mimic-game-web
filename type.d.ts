@@ -51,7 +51,7 @@ interface RoomResponseData {
   roomMaxPlayers: number;
   roomPlayers: RoomPlayerData[];
   gameRule: GameRule;
-  gameData: GameData;
+  // gameData: GameData;
   isPublic: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -97,6 +97,7 @@ interface RoomRejoinResponse {
 interface RoomLeavePayload {
   roomId: string;
   socketId: string;
+  leaveRoom: boolean;
 }
 
 interface RoomLeaveResponse {

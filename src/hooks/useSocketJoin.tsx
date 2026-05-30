@@ -10,6 +10,7 @@ export default function useSocketJoin() {
   const router = useRouter();
   const { socket, isConnected, socketConnect } = useSocket();
   const [joinRoomError, setJoinRoomError] = useState<string | undefined>()
+  const [isPending, setIsPending] = useState(false);
   const { setRoom } = useRoomStore();
 
   const joinRoom = useCallback((roomId: string, playerEmail: string, playerName: string, playerAvatar: string): void => {
@@ -17,6 +18,7 @@ export default function useSocketJoin() {
     if (!isConnected) {
       socketConnect();
     }
+    setIsPending(true);
     const sanitizedPlayerName = playerName.replace(/[^a-zA-Z0-9 ]/g, "").substring(0, 15);
     const payload: RoomJoinPayload = {
       roomId: roomId,
@@ -26,6 +28,7 @@ export default function useSocketJoin() {
     }
     socket?.emit("room:join", payload)
       .on("room-join-failed", (response: RoomJoinResponse) => {
+        setIsPending(false);
         const { message } = response;
         switch (message) {
           case "Room not found!":
@@ -52,5 +55,6 @@ export default function useSocketJoin() {
   return {
     joinRoom,
     joinRoomError,
+    isPending,
   }
 }

@@ -118,7 +118,7 @@ export default function PlayGameSetup({ isHost }: PlayGameSetupProps) {
                     if (n >= 7) return "2";
                     return "1";
                   })()}x</strong>
-                  <InfoPopover label="False Agent" text={`False Agent is who get different word.`} />
+                  <InfoPopover label="MORF Agent" text={`MORF Agent is who get different word.`} />
                 </div>
                 <SwitchInput id="minority" checked={setupFormData.roles?.minority || false} disabled onCheckedChange={(value) => handleSetupFormChange("roles", { minority: value })} />
               </div>
@@ -130,7 +130,7 @@ export default function PlayGameSetup({ isHost }: PlayGameSetupProps) {
                     if (n >= 11) return <strong>2x </strong>;
                     return "";
                   })()}
-                  <InfoPopover label="Unknown Origin" text={`Unknown Origin is who don't get any word. Minimum 5 players to enable. `} />
+                  <InfoPopover label="Rogue Agent" text={`Rogue Agent is who don't get any word. Minimum 5 players to enable. `} />
                 </div>
                 <SwitchInput id="blind" checked={setupFormData.roles?.blind || false} disabled={roomPlayers?.length && roomPlayers?.length < 5 ? true : false} onCheckedChange={(value) => handleSetupFormChange("roles", { blind: value })} />
               </div>

@@ -42,7 +42,7 @@ export default function ModalSearch({ isOpen, onClose, roomId, playerName, playe
   })
   const [isLoading, setIsLoading] = useState(false);
   const [modalFormError, setModalFormError] = useState<ModalFormError | null>(null);
-  const { joinRoom, joinRoomError } = useSocketJoin()
+  const { joinRoom, joinRoomError, isPending: isJoinRoomPending } = useSocketJoin()
 
   useEffect(() => {
     setModalFormData((prev) => ({
@@ -108,8 +108,8 @@ export default function ModalSearch({ isOpen, onClose, roomId, playerName, playe
         {joinRoomError && <p className="text-red-500">{joinRoomError}</p>}
         <Input type="text" label="Room ID" placeholder="Input Room ID" value={modalFormData.roomId} onChange={(e) => handleFormChange({ key: "roomId", value: e.target.value })} error={modalFormError?.roomId} inputClassName="uppercase text-center"/>
         <Input type="text" label="Agent Code" placeholder="Six Seven Eight" value={modalFormData.playerName} autoFocus={true} onChange={(e) => handleFormChange({ key: "playerName", value: e.target.value })} error={modalFormError?.playerName} inputClassName="text-center" />
-        <Button variant="success" onClick={handlerRoomValidation} disabled={isPending || isLoading}>
-          {isPending || isLoading ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : "Join Room"}
+        <Button variant="success" onClick={handlerRoomValidation} disabled={isPending || isLoading || isJoinRoomPending}>
+          {isPending || isLoading || isJoinRoomPending ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : "Join Room"}
         </Button>
       </div>
     </Modal>

@@ -73,15 +73,15 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
   const winStatusImage = (winStatus: string) => {
     switch (winStatus) {
       case "The Shifter":
-        return "/images/win-two.webp";
+        return "/images/minority-win.webp";
       case "The Unknown Origin":
-        return "/images/win-two.webp";
+        return "/images/minority-win.webp";
       case "The Agents":
-        return "/images/win-one.webp";
+        return "/images/majority-win.webp";
       case "The Saboteur":
-        return "/images/win-three.webp";
+        return "/images/saboteur-win.webp";
       default:
-        return "/images/agent-male.webp";
+        return "/images/morf-logo.webp";
     }
   }
 

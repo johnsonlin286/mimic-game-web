@@ -30,6 +30,7 @@ export default function PlayRoomStatus({ isHost }: PlayRoomStatusProps) {
     const payload: RoomLeavePayload = {
       roomId: roomId,
       socketId: socket.id,
+      leaveRoom: true,
     };
     socket.emit("room:leave", payload)
       .once("room-leave-success", () => {

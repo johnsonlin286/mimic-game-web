@@ -124,6 +124,13 @@ export default function PlayGame() {
       setOverlayMessage(null);
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleRoomRejoinSuccess = (response: any) => {
+      if (!response) return;
+      setGameWord(response.data.gameData.gameWord);
+      setSuperpower(response.data.gameData.superpower);
+    }
+
     const events: [string, (...args: unknown[]) => void][] = [
       ["listen-game-initialized-player", handleGameInitializedPlayer],
       ["use-superpower-interrogator", handleUseSuperpowerInterrogator],
@@ -135,6 +142,7 @@ export default function PlayGame() {
       ["use-superpower-failed", handleUseSuperpowerFailed],
       ["activate-passive-power-success", handleActivatePassivePowerSuccess],
       ["listen-hide-overlay-success", handleHideOverlaySuccess],
+      ["room-rejoin-success", handleRoomRejoinSuccess],
     ];
 
     events.forEach(([event, handler]) => socket.on(event, handler));
@@ -174,7 +182,7 @@ export default function PlayGame() {
           {overlayMessage && (
             <div className="flex flex-col justify-center items-center gap-5">
               <h3 className="text-5xl font-bold uppercase">{overlayMessage.superpowerName}</h3>
-              <Image src={'/images/shift-logo.webp'} alt={overlayMessage.superpowerName} width={0} height={0} sizes="100vw" className="w-full h-auto max-w-60" />
+              <Image src="/images/morf-logo.webp" alt="morf-logo" width={0} height={0} sizes="100vw" className="w-full h-auto max-w-60" />
               <p className="text-lg text-center">
                 {overlayMessage.message}
               </p>
@@ -213,7 +221,7 @@ export default function PlayGame() {
               </li>
             ))}
           </ul>
-          {activeSuperpower === 'interrogator' && overlayMessage?.userName === playerData?.playerName && (
+          {activeSuperpower === 'interrogator' && (
             <Button variant="primary" size="sm" className="w-full" onClick={() => {
               socket.emit("game:hide-overlay", roomId);
               setSuperpowerModal(false);

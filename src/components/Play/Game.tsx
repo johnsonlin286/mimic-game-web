@@ -4,6 +4,8 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useRoomStore } from "@/store/room-state";
 import { useToastStore } from "@/store/toast-state";
+import { alertSound, playSfx } from '@/utils/sounds';
+import { IMAGE_ASSETS_URL } from "@/services/const";
 import useSocket from "@/hooks/useSocket";
 import CardStack from "@/components/Play/CardStack";
 import WordCard from "@/components/Play/WordCard";
@@ -101,6 +103,10 @@ export default function PlayGame() {
         message: response.message,
       });
       setOverlay(true);
+      playSfx(alertSound);
+      if ('vibrate' in navigator) {
+        navigator.vibrate(200);
+      }
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -182,7 +188,7 @@ export default function PlayGame() {
           {overlayMessage && (
             <div className="flex flex-col justify-center items-center gap-5">
               <h3 className="text-5xl font-bold uppercase">{overlayMessage.superpowerName}</h3>
-              <Image src="/images/morf-logo.webp" alt="morf-logo" width={0} height={0} sizes="100vw" className="w-full h-auto max-w-60" />
+              <Image src={`${IMAGE_ASSETS_URL}/images/morf-logo.webp`} alt="morf-logo" width={0} height={0} sizes="100vw" className="w-full h-auto max-w-60" />
               <p className="text-lg text-center">
                 {overlayMessage.message}
               </p>

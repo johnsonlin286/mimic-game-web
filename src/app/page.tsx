@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 
-import { FETCH_ALL_ROOMS } from "@/services/const";
+import { FETCH_ALL_ROOMS, IMAGE_ASSETS_URL } from "@/services/const";
 import { fetchAllRooms } from "@/services/rooms";
 import { useToastStore } from "@/store/toast-state";
 import Container from "@/components/Container";
@@ -56,7 +56,7 @@ export default function Home() {
         <GoogleLoginBtn />
       </div>
       <div className="flex flex-col items-center justify-center gap-4 w-full h-full">
-        <Image src="/images/morf-logo.webp" alt="morf-logo" width={0} height={0} sizes="100vw" priority className="w-full max-w-md" />
+        <Image src={`${IMAGE_ASSETS_URL}/images/morf-logo.webp`} alt="morf-logo" width={0} height={0} sizes="100vw" priority className="w-full max-w-md" />
         <Panel className="w-full max-w-md">
           {!session && (
             <div className="flex justify-center w-full">

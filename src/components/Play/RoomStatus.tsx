@@ -4,6 +4,7 @@ import { CircleArrowLeft, CopyIcon } from "lucide-react";
 
 import { useRoomStore } from "@/store/room-state";
 import { useToastStore } from "@/store/toast-state";
+import { offSound, playSfx } from '@/utils/sounds';
 import useSocket from "@/hooks/useSocket";
 import RestartBtn from "@/components/Play/RestartBtn";
 
@@ -34,6 +35,7 @@ export default function PlayRoomStatus({ isHost }: PlayRoomStatusProps) {
     };
     socket.emit("room:leave", payload)
       .once("room-leave-success", () => {
+        playSfx(offSound);
         resetRoom();
         router.push("/");
       })

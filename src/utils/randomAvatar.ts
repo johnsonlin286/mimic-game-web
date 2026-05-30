@@ -1,9 +1,11 @@
+import { IMAGE_ASSETS_URL } from "@/services/const";
+
 export default function randomAvatar() {
   const avatarPath = [
-    "/images/agent-male-a.webp",
-    "/images/agent-male-b.webp",
-    "/images/agent-female-a.webp",
-    "/images/agent-female-b.webp",
+    `${IMAGE_ASSETS_URL}/images/agent-male-a.webp`,
+    `${IMAGE_ASSETS_URL}/images/agent-male-b.webp`,
+    `${IMAGE_ASSETS_URL}/images/agent-female-a.webp`,
+    `${IMAGE_ASSETS_URL}/images/agent-female-b.webp`,
   ]
   return avatarPath[Math.floor(Math.random() * avatarPath.length)];
 }

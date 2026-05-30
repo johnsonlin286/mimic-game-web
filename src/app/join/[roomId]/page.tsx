@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react"
 import Image from "next/image";
 
 import { fetchRoom } from "@/services/rooms";
+import { IMAGE_ASSETS_URL } from "@/services/const";
 import useSocketJoin from "@/hooks/useSocketJoin";
 import randomAvatar from "@/utils/randomAvatar";
 import Container from "@/components/Container";
@@ -52,7 +53,7 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
 
   return (
     <Container className="flex flex-col items-center justify-center gap-4 w-full h-full">
-      <Image src="/images/invitation.webp" alt="morf-invitation" width={0} height={0} sizes="100vw" priority className="w-full max-w-md" />
+      <Image src={`${IMAGE_ASSETS_URL}/images/invitation.webp`} alt="morf-invitation" width={0} height={0} sizes="100vw" priority className="w-full max-w-md" />
       <Panel className="w-full max-w-md">
         <div className="flex flex-col items-center gap-2 justify-center w-full">
         {isLoadingRoom ? (

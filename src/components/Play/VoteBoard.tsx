@@ -5,6 +5,8 @@ import Image from "next/image";
 
 import { useRoomStore } from "@/store/room-state";
 import { useToastStore } from "@/store/toast-state";
+import { startSound, winSound, playSfx } from '@/utils/sounds';
+import { IMAGE_ASSETS_URL } from "@/services/const";
 import useSocket from "@/hooks/useSocket";
 import Button from "@/components/Button";
 import Modal from "@/components/Modal";
@@ -73,15 +75,15 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
   const winStatusImage = (winStatus: string) => {
     switch (winStatus) {
       case "The Shifter":
-        return "/images/minority-win.webp";
+        return `${IMAGE_ASSETS_URL}/images/minority-win.webp`;
       case "The Unknown Origin":
-        return "/images/minority-win.webp";
+        return `${IMAGE_ASSETS_URL}/images/minority-win.webp`;
       case "The Agents":
-        return "/images/majority-win.webp";
+        return `${IMAGE_ASSETS_URL}/images/majority-win.webp`;
       case "The Saboteur":
-        return "/images/saboteur-win.webp";
+        return `${IMAGE_ASSETS_URL}/images/saboteur-win.webp`;
       default:
-        return "/images/morf-logo.webp";
+        return `${IMAGE_ASSETS_URL}/images/morf-logo.webp`;
     }
   }
 
@@ -134,6 +136,9 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
     if (!socket) return;
 
     const mapOutcomeMessageToWinStatus = (message: string) => {
+      if (message !== 'Blind got caught!') {
+        playSfx(winSound);
+      }
       switch (message) {
         case "Minority is the winner":
           return "The Shifter";

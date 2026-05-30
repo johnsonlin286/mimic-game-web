@@ -12,6 +12,8 @@ import RoomStatus from "@/components/Play/RoomStatus";
 import PlayLobby from "@/components/Play/Lobby";
 import PlayGame from "@/components/Play/Game";
 
+import { onSound, offSound, startSound, playSfx } from '@/utils/sounds';
+
 let pendingDisconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
 export default function PlayPage() {
@@ -88,6 +90,7 @@ export default function PlayPage() {
           : `${playerName} has joined the room`,
         "success"
       );
+      playSfx(onSound);
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -104,6 +107,7 @@ export default function PlayPage() {
     };
 
     const onKickedPlayer = () => {
+      playSfx(offSound);
       resetRoom();
       router.push("/");
       setToast("You have been kicked from the room", "warning");
@@ -117,10 +121,15 @@ export default function PlayPage() {
     const onGameStartSuccess = (response: GameStartResponse) => {
       setRoom(response.data);
     };
-
+    
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const onGameInitializeSuccess = (response: any) => {
       setRoom(response.data);
+      playSfx(startSound);
+    };
+
+    const onGameRestartSuccess = () => {
+      playSfx(offSound);
     };
 
     document.addEventListener('visibilitychange', handleAwake);
@@ -131,6 +140,7 @@ export default function PlayPage() {
     socket.on("listen-room-kick-player", onKickPlayer);
     socket.on("listen-game-start-success", onGameStartSuccess);
     socket.on("listen-game-initialize-success", onGameInitializeSuccess);
+    socket.on("listen-game-restart-success", onGameRestartSuccess);
 
     return () => {
       document.removeEventListener('visibilitychange', handleAwake);
@@ -141,6 +151,7 @@ export default function PlayPage() {
       socket.off("listen-room-kick-player", onKickPlayer);
       socket.off("listen-game-start-success", onGameStartSuccess);
       socket.off("listen-game-initialize-success", onGameInitializeSuccess);
+      socket.off("listen-game-restart-success", onGameRestartSuccess);
     };
   }, [socket, roomId, session, router, socketConnect, setRoom, resetRoom, setToast]);
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react"
 
@@ -11,6 +11,8 @@ import Input from "../Input"
 import InputNumber from "../InputNumber"
 import SwitchInput from "../SwitchInput"
 import Button from "../Button"
+
+import { completeSound, playSfx } from '@/utils/sounds';
 
 interface ModalCreateProps {
   isOpen: boolean;
@@ -43,6 +45,13 @@ export default function ModalCreate({ isOpen, onClose, playerName, playerEmail }
   const { socket, isConnected, socketConnect, socketDisconnect } = useSocket();
   const { setRoom } = useRoomStore();
   const { setToast } = useToastStore();
+  const isSubmittingRef = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      isSubmittingRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     setCreateRoomFormData((prev) => ({
@@ -52,9 +61,12 @@ export default function ModalCreate({ isOpen, onClose, playerName, playerEmail }
   }, [playerName, playerEmail]);
 
   const handleCreateRoom = useCallback(() => {
+    if (isSubmittingRef.current || !socket) return;
     if (!isConnected) {
       socketConnect();
     }
+
+    isSubmittingRef.current = true;
     setIsLoading(true);
     const { playerName, roomMaxPlayers, isPublic } = createRoomFormData;
     setCreateRoomError(null);
@@ -66,9 +78,12 @@ export default function ModalCreate({ isOpen, onClose, playerName, playerEmail }
       creatorAvatar: creatorAvatar,
       roomMaxPlayers: roomMaxPlayers,
       isPublic: isPublic,
-    }
-    socket?.emit("room:create", payload)
-      .on("room-created", (response: RoomCreateResponse) => {
+    };
+
+    socket.emit("room:create", payload)
+      .once("room-created", (response: RoomCreateResponse) => {
+        isSubmittingRef.current = false;
+        setIsLoading(false);
         const { data } = response;
         setToast(`Room ${data.roomId} created`, "success");
         setRoom({
@@ -81,31 +96,33 @@ export default function ModalCreate({ isOpen, onClose, playerName, playerEmail }
           createdAt: data.createdAt,
           updatedAt: data.updatedAt,
         } as RoomResponseData);
-        // onClose();
+        playSfx(completeSound, 0.3);
         router.push(`/play/${data.roomId}`);
       })
-      .on("room-create-failed", (response: RoomCreateResponse) => {
+      .once("room-create-failed", (response: RoomCreateResponse) => {
+        isSubmittingRef.current = false;
+        setIsLoading(false);
         const { message } = response;
         switch (message) {
           case "Creator email is required!":
-            setCreateRoomError({ ...createRoomError, generalError: "Creator email is required!" });
+            setCreateRoomError((prev) => ({ ...prev, generalError: "Creator email is required!" }));
             break;
           case "Creator email already exists!":
-            setCreateRoomError({ ...createRoomError, generalError: "Creator email already exists!" });
+            setCreateRoomError((prev) => ({ ...prev, generalError: "Creator email already exists!" }));
             break;
           case "Room max players is required!":
-            setCreateRoomError({ ...createRoomError, roomMaxPlayers: "Room max players is required!" });
+            setCreateRoomError((prev) => ({ ...prev, roomMaxPlayers: "Room max players is required!" }));
             break;
           case "Room max players must be between 3 and 10!":
-            setCreateRoomError({ ...createRoomError, roomMaxPlayers: "Room max players must be between 3 and 10!" });
+            setCreateRoomError((prev) => ({ ...prev, roomMaxPlayers: "Room max players must be between 3 and 10!" }));
             break;
           default:
-            setCreateRoomError({ ...createRoomError, generalError: "An error occurred while creating the room" });
+            setCreateRoomError((prev) => ({ ...prev, generalError: "An error occurred while creating the room" }));
             break;
         }
         socketDisconnect();
       });
-  }, [playerEmail, isConnected, createRoomFormData, createRoomError, socket, socketConnect, socketDisconnect, setRoom, router, setToast]);
+  }, [playerEmail, isConnected, createRoomFormData, socket, socketConnect, socketDisconnect, setRoom, router, setToast]);
 
   const formValidation = useCallback(() => {
     setCreateRoomError(null);

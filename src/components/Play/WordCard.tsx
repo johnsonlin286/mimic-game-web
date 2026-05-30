@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useLongPress } from "@uidotdev/usehooks";
 import Image from "next/image";
 
+import { IMAGE_ASSETS_URL } from "@/services/const";
+
 interface WordCardProps {
   label?: string;
   word: string;
@@ -29,7 +31,7 @@ export default function WordCard({ label, word, orientation = "portrait", onFlip
             <h1 className="text-2xl font-bold text-center text-white uppercase">{word ? word : "You are the Unknown"}</h1>
             {!word && (
               <>
-                <Image src="/images/agent-jellyfish.webp" alt="agent-jellyfish" width={100} height={100} sizes="100vw" className="pointer-events-none" />
+                <Image src={`${IMAGE_ASSETS_URL}/images/agent-jellyfish.webp`} alt="agent-jellyfish" width={100} height={100} sizes="100vw" className="pointer-events-none" />
                 <p className="text-sm text-center">
                   Collect information from other players to guess the word.
                 </p>
@@ -38,7 +40,7 @@ export default function WordCard({ label, word, orientation = "portrait", onFlip
           </div>
           <div className="absolute flex flex-col justify-between items-center w-full h-full backface-hidden rotate-y-180 bg-light-navy rounded-2xl shadow-lg p-6">
             <div className="flex-1 flex flex-col gap-3 justify-center items-center">
-              {label ? <strong className="text-white text-2xl text-center font-fredoka font-bold">{label}</strong> : <Image src="/images/morf-logo.webp" alt="morf-logo" width={150} height={150} sizes="100vw" className="pointer-events-none"/>}
+              {label ? <strong className="text-white text-2xl text-center font-fredoka font-bold">{label}</strong> : <Image src={`${IMAGE_ASSETS_URL}/images/morf-logo.webp`} alt="morf-logo" width={150} height={150} sizes="100vw" className="pointer-events-none"/>}
               <p className="text-sm text-center text-white font-fredoka">
                 Tap and hold to reveal
               </p>

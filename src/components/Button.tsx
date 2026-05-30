@@ -1,4 +1,7 @@
-import { ButtonHTMLAttributes } from "react";
+import { ButtonHTMLAttributes, useCallback } from "react";
+import useSound from 'use-sound';
+
+import { buttonSound } from '@/utils/sounds';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "danger" | "warning" | "success";
@@ -8,7 +11,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
 }
 
-export default function Button({ variant = "primary", size = "md", disabled = false, className, children, ...props }: ButtonProps) {
+export default function Button({ variant = "primary", size = "md", disabled = false, className, children, onClick, ...rest }: ButtonProps) {
   const baseClasses = "button ring-4 ring-black rounded-full font-fredoka font-bold uppercase hover:inset-shadow-sm hover:inset-shadow-black/50 cursor-pointer disabled:bg-slate-500/50 disabled:shadow-[inset_0px_-6px_0px_0px_#64748B/50] disabled:text-slate-300/50 disabled:hover:inset-shadow-none disabled:cursor-not-allowed px-4 py-2";
 
   const variantClasses = {
@@ -24,11 +27,19 @@ export default function Button({ variant = "primary", size = "md", disabled = fa
     md: "text-2xl px-4 pt-2 pb-3",
     lg: "text-3xl px-6 pt-3 pb-4",
   }[size];
-  
+
   const classes = `${baseClasses} ${variantClasses} ${sizeClasses} ${className}`;
-  
+
+  const [playButtonSound] = useSound(buttonSound);
+
+  const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    if (disabled) return;
+    playButtonSound();
+    onClick?.(e);
+  }, [onClick, disabled, playButtonSound]);
+
   return (
-    <button className={classes} disabled={disabled} {...props}>
+    <button {...rest} className={classes} disabled={disabled} onClick={handleClick}>
       {children}
     </button>
   )

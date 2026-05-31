@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { Zap } from "lucide-react";
+import Image from "next/image";
 
+import { IMAGE_ASSETS_URL } from "@/services/const";
 import { useLongPress } from "@uidotdev/usehooks";
 import { useRoomStore } from '@/store/room-state';
 import useSocket from "@/hooks/useSocket";
@@ -84,11 +85,9 @@ export default function PowerCard({ power }: PowerCardProps) {
           </div>
           <div className="absolute flex flex-col justify-between items-center w-full h-full backface-hidden rotate-y-180 bg-dark-navy rounded-2xl shadow-lg p-6">
             <div className="flex-1 flex flex-col gap-3 justify-center items-center">
-              <div className="flex justify-center items-center border-4 border-grape rounded-full p-5">
-                <Zap className="w-20 h-20 text-grape" />
-              </div>
-              <p className="text-sm text-center text-zinc-100">
-                Tap and hold to reveal your specialist skills
+              <Image src={`${IMAGE_ASSETS_URL}/images/power-card.webp`} alt="morf-blank" width={150} height={150} sizes="100vw" className="pointer-events-none"/>
+              <p className="text-sm text-center text-white font-fredoka">
+                Tap and hold to reveal your special skill
               </p>
             </div>
           </div>

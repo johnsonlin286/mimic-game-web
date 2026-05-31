@@ -5,7 +5,7 @@ import Image from "next/image";
 
 import { useRoomStore } from "@/store/room-state";
 import { useToastStore } from "@/store/toast-state";
-import { startSound, winSound, playSfx } from '@/utils/sounds';
+import { winSound, alertSound, playSfx } from '@/utils/sounds';
 import { IMAGE_ASSETS_URL } from "@/services/const";
 import useSocket from "@/hooks/useSocket";
 import Button from "@/components/Button";
@@ -141,13 +141,13 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
       }
       switch (message) {
         case "Minority is the winner":
-          return "The Shifter";
+          return "The MORF";
         case "Blind is the winner":
-          return "The Unknown Origin";
+          return "The ROGUE";
         case "Majority is the winner":
           return "The Agents";
         case "Blind got caught!":
-          return "The Unknown Origin Got Caught";
+          return "The ROGUE Got Caught";
         case "Saboteur is the winner":
           return "The Saboteur";
         default:
@@ -191,6 +191,11 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
           !isPassivePowerActivatedRef.current
         ) {
           updatePassivePowerConfirmModalRef.current({ isOpen: true, type: 'chief' });
+          if ('vibrate' in navigator) {
+            navigator.vibrate(200);
+          } else {
+            playSfx(alertSound);
+          }
         }
         return;
       }
@@ -200,6 +205,11 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
         const voteCount = player.voters?.length ?? 0;
         if (voteCount >= 2 && !isPassivePowerActivatedRef.current) {
           updatePassivePowerConfirmModalRef.current({ isOpen: true, type: 'briber' });
+          if ('vibrate' in navigator) {
+            navigator.vibrate(200);
+          } else {
+            playSfx(alertSound);
+          }
         }
       }
     };
@@ -324,9 +334,8 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
     if (!playerSuperpower?.name) return;
     setIsPassivePowerActivated(true);
     setPassivePowerConfirmModal({ isOpen: false, type: null });
-    // activatedPassiveSuperpower(playerSuperpower.name, true);
-    // updatePassivePowerConfirmModal({ isOpen: false, type: null });
-  }, [playerSuperpower])
+    activatedPassiveSuperpower(playerSuperpower.name, true);
+  }, [playerSuperpower, activatedPassiveSuperpower])
 
   const voteRequest = useCallback(() => {
     if (!session?.user?.email || !socket || !roomId) return;
@@ -409,10 +418,10 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
                 <ol className="flex flex-col gap-4 border-t border-zinc-300 py-4">
                   {gameData?.players?.map((player: PlayerWithRole) => (
                     <li key={player.playerEmail} className="grid grid-cols-3 items-center gap-4">
-                      <strong className={`font-fredoka text-xl capitalize text-nowrap text-ellipsis overflow-hidden ${player.isAlive ? 'text-white' : 'text-zinc-500 line-through'}`}>
+                      <strong className={`font-fredoka capitalize text-nowrap text-ellipsis overflow-hidden ${player.isAlive ? 'text-white' : 'text-zinc-500 line-through'}`}>
                         {player.playerName}
                       </strong>
-                      <ul className="flex-1">
+                      <ul className={player.voters && player.voters?.length > 0 ? '' : 'h-0 overflow-hidden'}>
                         {player.voters?.map((voter, index) => (
                           <li key={index} className="text-xs text-white">
                             {voter.playerName}

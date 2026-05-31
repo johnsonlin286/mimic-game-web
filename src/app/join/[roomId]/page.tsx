@@ -52,8 +52,8 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
   }, [joinRoomFormData, session, roomId, joinRoom]);
 
   return (
-    <Container className="flex flex-col items-center justify-center gap-4 w-full h-full">
-      <Image src={`${IMAGE_ASSETS_URL}/images/invitation.webp`} alt="morf-invitation" width={0} height={0} sizes="100vw" priority className="w-full max-w-md" />
+    <Container className="flex flex-col items-center gap-4 w-full h-full py-5">
+      <Image src={`${IMAGE_ASSETS_URL}/images/invitation.webp`} alt="morf-invitation" width={0} height={0} sizes="100vw" priority className="w-full max-w-sm" />
       <Panel className="w-full max-w-md">
         <div className="flex flex-col items-center gap-2 justify-center w-full">
         {isLoadingRoom ? (

@@ -42,7 +42,7 @@ export default function PlayGame() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleGameInitializedPlayer = (response: any) => {
       if (!response) return;
-      console.log("handleGameInitializedPlayer", response.data.gameWord, response.data.superpower);
+      // console.log("handleGameInitializedPlayer", response.data.gameWord, response.data.superpower);
       setGameWord(response.data.gameWord);
       setSuperpower(response.data.superpower ?? null);
     };
@@ -58,7 +58,6 @@ export default function PlayGame() {
     const handleInterrogatorPickTargetFailed = (response: any) => {
       if (!response) return;
       setToastRef.current(response.message, "error");
-      setOverlayMessage(response.data);
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -70,6 +69,22 @@ export default function PlayGame() {
         isUsed: true,
       }));
     };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleListenInterrogatorPickTargetSuccess = (response: any) => {
+      if (!response) return;
+      setOverlayMessage({
+        superpowerName: "Interrogator",
+        message: response.message,
+      });
+      const isTargetPlayer = response.data.targetPlayerEmail === session?.user?.email;
+      if (isTargetPlayer) {
+        playSfx(alertSound);
+        if ('vibrate' in navigator) {
+          navigator.vibrate(200);
+        }
+      }
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleUseSuperpowerDetective = (response: any) => {
@@ -106,6 +121,8 @@ export default function PlayGame() {
       playSfx(alertSound);
       if ('vibrate' in navigator) {
         navigator.vibrate(200);
+      } else {
+        playSfx(alertSound);
       }
     };
 
@@ -142,6 +159,7 @@ export default function PlayGame() {
       ["use-superpower-interrogator", handleUseSuperpowerInterrogator],
       ["interrogator-pick-target-failed", handleInterrogatorPickTargetFailed],
       ["interrogator-pick-target-success", handleInterrogatorPickTargetSuccess],
+      ["listen-interrogator-pick-target-success" , handleListenInterrogatorPickTargetSuccess],
       ["use-superpower-detective", handleUseSuperpowerDetective],
       ["use-superpower-wiretapper", handleUseSuperpowerWiretapper],
       ["listen-use-superpower-success", handleUseSuperpowerSuccess],
@@ -156,7 +174,7 @@ export default function PlayGame() {
     return () => {
       events.forEach(([event, handler]) => socket.off(event, handler));
     };
-  }, [socket]);
+  }, [session, socket]);
 
   const handleInterrogatorPickTarget = useCallback((targetPlayerEmail: string) => {
     if (!socket || !roomId || !targetPlayerEmail) return;
@@ -214,6 +232,8 @@ export default function PlayGame() {
                     label={player.playerName}
                     word={player.gameRole || player.gameWord || ""}
                     orientation="landscape"
+                    frontSideClassName="!bg-dark-navy"
+                    backSideClassName="!bg-dark-navy"
                     onFlip={() => {
                       setSuperpowerModal(false);
                       socket.emit("game:hide-overlay", roomId);

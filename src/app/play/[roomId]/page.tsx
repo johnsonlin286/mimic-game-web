@@ -71,8 +71,7 @@ export default function PlayPage() {
         socketId: socket.id,
         playerEmail: session?.user?.email,
       })
-        .once("room-rejoin-success", (response: RoomRejoinResponse) => {
-          // setRoom(response.data.room);
+        .once("room-rejoin-success", () => {
         })
         .once("room-rejoin-not-found", () => {
           resetRoom();
@@ -190,14 +189,11 @@ export default function PlayPage() {
 
     hasRejoinedRef.current = true;
 
-    const onSuccess = (response: RoomRejoinResponse) => {
-      // console.log(response);
-      // setRoom(response.data.room);
+    const onSuccess = () => {
       setToast("You have rejoined the room", "success");
     };
 
-    const onNotFound = (response: RoomRejoinResponse) => {
-      // console.log(response);
+    const onNotFound = () => {
       resetRoom();
       router.push("/");
     };

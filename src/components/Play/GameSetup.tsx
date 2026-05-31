@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 
 import { useRoomStore } from "@/store/room-state";
 import { useToastStore } from "@/store/toast-state";
+import { alertSound, playSfx } from '@/utils/sounds';
 import useSocket from "@/hooks/useSocket";
 import Panel from "@/components/Panel";
 import Modal from "@/components/Modal";
@@ -38,6 +39,7 @@ export default function PlayGameSetup({ isHost }: PlayGameSetupProps) {
     const handleGameRuleUpdateSuccess = (response: GameRuleUpdateResponse) => {
       setToast("Game rule updated", "success");
       setRoom(response.data as RoomResponseData);
+      playSfx(alertSound);
     };
     
     socket.on("listen-game-rule-update-success", handleGameRuleUpdateSuccess);

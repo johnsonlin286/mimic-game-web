@@ -1,7 +1,6 @@
 import { ButtonHTMLAttributes, useCallback } from "react";
-import useSound from 'use-sound';
 
-import { buttonSound } from '@/utils/sounds';
+import { buttonSound, playSfx } from '@/utils/sounds';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "danger" | "warning" | "success";
@@ -30,13 +29,11 @@ export default function Button({ variant = "primary", size = "md", disabled = fa
 
   const classes = `${baseClasses} ${variantClasses} ${sizeClasses} ${className}`;
 
-  const [playButtonSound] = useSound(buttonSound);
-
   const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
     if (disabled) return;
-    playButtonSound();
+    playSfx(buttonSound);
     onClick?.(e);
-  }, [onClick, disabled, playButtonSound]);
+  }, [onClick, disabled]);
 
   return (
     <button {...rest} className={classes} disabled={disabled} onClick={handleClick}>

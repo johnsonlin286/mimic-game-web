@@ -24,8 +24,8 @@ const siteDescription =
 const siteUrl =
   process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "") ?? "http://localhost:3002";
 
-const ogImageUrl = process.env.NEXT_PUBLIC_IMAGE_ASSETS_URL
-  ? `${process.env.NEXT_PUBLIC_IMAGE_ASSETS_URL}/images/invitation.webp`
+const ogImageUrl = process.env.NEXT_PUBLIC_R2_ASSETS_URL
+  ? `${process.env.NEXT_PUBLIC_R2_ASSETS_URL}/images/invitation.webp`
   : `${siteUrl}/images/morf-logo.webp`;
 
 export const metadata: Metadata = {

@@ -111,7 +111,7 @@ export default function SelectInput({
   return (
     <div ref={rootRef} className={`relative flex flex-col gap-0.5 ${className}`}>
       {label && (
-        <label id={`${id}-label`} htmlFor={id} className="text-sm font-medium">
+        <label id={`${id}-label`} htmlFor={id} className="text-sm md:text-base font-medium">
           {label}
         </label>
       )}

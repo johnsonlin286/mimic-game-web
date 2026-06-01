@@ -140,7 +140,7 @@ export default function CardStack({
       role="group"
       aria-label={aria}
     >
-      <div className="relative w-full max-w-60 mx-auto aspect-3/4 min-h-[280px]">
+      <div className="relative w-full max-w-60 md:max-w-80 mx-auto aspect-3/4 min-h-[280px]">
         {[0, 1].map((i) => {
           const card = i === 0 ? first : second;
           const isFront = activeIndex === i;

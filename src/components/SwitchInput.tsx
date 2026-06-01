@@ -26,7 +26,7 @@ export default function SwitchInput({ id, labelLeft, labelRight, checked, disabl
   return (
     <div className={`flex items-center justify-between gap-2 ${className}`}>
       {labelLeft && (
-        <label htmlFor={id} className={`text-md font-nunito font-bold ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>
+        <label htmlFor={id} className={`text-sm md:text-md font-nunito font-bold ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>
           {labelLeft}
         </label>
       )}
@@ -34,7 +34,7 @@ export default function SwitchInput({ id, labelLeft, labelRight, checked, disabl
         <div className={`w-4 h-4 rounded-full shadow-md transition-all duration-300 ${isChecked ? "translate-x-6 bg-mint" : "translate-x-0 bg-white"}`} aria-hidden="true" />
       </div>
       {labelRight && (
-        <label htmlFor={id} className={`text-md font-nunito font-bold ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>
+        <label htmlFor={id} className={`text-sm md:text-md font-nunito font-bold ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>
           {labelRight}
         </label>
       )}

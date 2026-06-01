@@ -205,9 +205,9 @@ export default function PlayGame() {
         <div className="fixed inset-0 flex justify-center items-center bg-black/50 backdrop-blur-xl z-40">
           {overlayMessage && (
             <div className="flex flex-col justify-center items-center gap-5">
-              <h3 className="text-5xl font-bold uppercase">{overlayMessage.superpowerName}</h3>
-              <Image src={`${IMAGE_ASSETS_URL}/images/morf-logo.webp`} alt="morf-logo" width={0} height={0} sizes="100vw" className="w-full h-auto max-w-60" />
-              <p className="text-lg text-center">
+              <h3 className="text-4xl md:text-5xl font-bold uppercase">{overlayMessage.superpowerName}</h3>
+              <Image src={`${IMAGE_ASSETS_URL}/images/morf-logo.webp`} alt="morf-logo" width={0} height={0} sizes="100vw" className="w-full h-auto max-w-60 md:max-w-80" />
+              <p className="text-base md:text-xl text-center">
                 {overlayMessage.message}
               </p>
             </div>
@@ -216,14 +216,14 @@ export default function PlayGame() {
       )}
       <Modal isOpen={superpowerModal} dismissible={false} onClose={() => setSuperpowerModal(false)}>
         <div className="flex flex-col gap-4">
-          <h2 className="text-2xl font-bold">Choose a player</h2>
+          <h2 className="text-xl md:text-2xl font-bold">Choose a player</h2>
           <ul className="grid grid-cols-2 gap-2">
             {superpowerOptions.map((player) => (
               <li key={player.socketId}>
                 {activeSuperpower === 'interrogator' ? (
                   <div className="w-full h-full">
                     <input type="radio" name="interrogator" id={player.playerName} value={player.playerName} disabled={superpower?.isUsed} onChange={() => handleInterrogatorPickTarget(player.playerEmail ?? "")} className="absolute opacity-0 w-0 h-0 peer" />
-                    <label htmlFor={player.playerName} className="flex justify-center items-center w-full h-full font-fredoka font-bold text-white text-2xl text-center rounded-2xl shadow-lg bg-slate-500 peer-checked:bg-mint p-6">
+                    <label htmlFor={player.playerName} className="flex justify-center items-center w-full h-full font-fredoka font-bold text-white text-xl md:text-2xl text-center rounded-2xl shadow-lg bg-slate-500 peer-checked:bg-mint p-6">
                       {player.playerName}
                     </label>
                   </div>

@@ -406,10 +406,10 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
 
   return (
     <>
-      {isHost && <Button variant="primary" size="md" onClick={voteRequest}>Vote Board</Button>}
+      {isHost && <Button variant="danger" size="lg" onClick={voteRequest}>Vote Board</Button>}
       <Modal isOpen={voteModal} dismissible={false} onClose={() => setVoteModal(false)}>
         <div className="flex flex-col gap-4">
-          <h2 className="text-2xl font-bold">
+          <h2 className="text-mint text-2xl md:text-4xl text-center font-bold">
             {!winStatus ? "Vote Board" : "Game Results"}
           </h2>
           <div className="flex flex-col gap-2">
@@ -418,12 +418,12 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
                 <ol className="flex flex-col gap-4 border-t border-zinc-300 py-4">
                   {gameData?.players?.map((player: PlayerWithRole) => (
                     <li key={player.playerEmail} className="grid grid-cols-3 items-center gap-4">
-                      <strong className={`font-fredoka capitalize text-nowrap text-ellipsis overflow-hidden ${player.isAlive ? 'text-white' : 'text-zinc-500 line-through'}`}>
+                      <strong className={`font-fredoka capitalize text-base md:text-2xl text-nowrap text-ellipsis overflow-hidden ${player.isAlive ? 'text-white' : 'text-zinc-500 line-through'}`}>
                         {player.playerName}
                       </strong>
                       <ul className={player.voters && player.voters?.length > 0 ? '' : 'h-0 overflow-hidden'}>
                         {player.voters?.map((voter, index) => (
-                          <li key={index} className="text-xs text-white">
+                          <li key={index} className="text-xs md:text-base text-white">
                             {voter.playerName}
                           </li>
                         ))}
@@ -454,33 +454,33 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
                 </ol>
                 {isHost && (
                   <div className="flex flex-col gap-4">
-                    <Button variant="danger" disabled={!allVoted} onClick={submitVote} className="w-full">Submit Vote</Button>
-                    <Button variant="warning" size="sm" onClick={voteRequest} className="w-full">Reload Vote</Button>
+                    <Button variant="danger" size="md" disabled={!allVoted} onClick={submitVote} className="w-full">Submit Vote</Button>
+                    <Button variant="warning" size="md" onClick={voteRequest} className="w-full">Reload Vote</Button>
                   </div>
                 )}
               </>
             ) : winStatus !== null && winStatus !== "none" ? (
               <>
                 {winStatus === "The Unknown Origin Got Caught" ? (
-                  <p className="text-lg text-center font-bold">
+                  <p className="text-lg md:text-xl text-center font-bold">
                     The Unknown Origin got caught!
                   </p>
                 ) : (
                   <>
-                    <p className="text-xl text-center text-white font-fredoka font-bold">
+                    <p className="text-xl md:text-2xl text-center text-white font-fredoka font-bold">
                       The winner is the
                       {' '}
                       <span className="capitalize">{winStatus}!</span>
                     </p>
                     <div className="flex justify-center items-center">
-                      <Image src={winStatusImage(winStatus)} alt="Win Status" priority width={150} height={150} />
+                      <Image src={winStatusImage(winStatus)} alt="Win Status" priority width={0} height={0} sizes="100vw" className="w-40 h-auto md:w-60 md:h-auto" />
                     </div>
                     {superpowerTriggered && (
-                      <p className="text-center text-red-500">
+                      <p className="text-lg md:text-xl text-center text-danger max-w-3xs mx-auto">
                         {superpowerTriggered}
                       </p>
                     )}
-                    <p className="text-sm text-center leading-relaxed">
+                    <p className="text-sm md:text-base text-center leading-relaxed">
                       <span>
                         The correct password was:&nbsp;
                         <strong>
@@ -506,13 +506,13 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
               </>
             ) : (
               <>
-                <p className="text-xl text-center font-fredoka font-bold">
+                <p className="text-2xl md:text-4xl text-center font-fredoka font-bold mx-auto">
                   No winner yet!
                   <br />
                   Vote result is tied!
                 </p>
                 {superpowerTriggered && (
-                  <p className="text-center text-red-500">
+                  <p className="text-lg md:text-xl text-center text-danger max-w-3xs mx-auto">
                     {superpowerTriggered}
                   </p>
                 )}
@@ -524,7 +524,7 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
                   ))}
                 </ul>
                 {isHost && (
-                  <Button variant="primary" size="md" onClick={continueGame} className="w-full">Continue</Button>
+                  <Button variant="primary" size="md" onClick={continueGame} className="w-full max-w-sm mx-auto">Continue</Button>
                 )}
               </>
             )}
@@ -533,7 +533,7 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
       </Modal>
       <Modal isOpen={guessWordModal} dismissible={false} onClose={() => setGuessWordModal(false)}>
         <div className="flex flex-col gap-4">
-          <h2 className="text-2xl font-bold">Guess the Word</h2>
+          <h2 className="text-xl md:text-2xl font-bold">Guess the Word</h2>
           <div className="flex flex-col gap-2">
             <Input label="Guess the Word" value={guessWord} onChange={(e) => setGuessWord(e.target.value)} />
             <Button variant="primary" size="md" onClick={submitGuessWord}>Guess</Button>
@@ -542,16 +542,16 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
       </Modal>
       <Modal isOpen={passivePowerConfirmModal.isOpen} dismissible={false} onClose={() => setPassivePowerConfirmModal({ isOpen: false, type: null })}>
         <div className="flex flex-col gap-4">
-          <h2 className="text-2xl font-bold">Confirm Use of Passive Power</h2>
-          <p className="text-sm text-center">
-            {passivePowerConfirmModal.type === 'chief' && 'The vote result is tied, You are the Chief, will you use your superpower?'}
-            {passivePowerConfirmModal.type === 'briber' && 'You get two or more elimination votes, will you use your superpower?'}
-            {passivePowerConfirmModal.type === 'saboteur' && 'You are the Saboteur, will you use your superpower?'}
+          <h2 className="text-warning text-xl md:text-4xl text-center font-bold">WARNING!</h2>
+          <p className="text-base md:text-2xl text-center">
+            {passivePowerConfirmModal.type === 'chief' && `The vote result is tied, You are the Chief, will you use your ${playerSuperpower?.name.toUpperCase()} skill?`}
+            {passivePowerConfirmModal.type === 'briber' && `You get two or more elimination votes, will you use your ${playerSuperpower?.name.toUpperCase()} skill?`}
+            {passivePowerConfirmModal.type === 'saboteur' && `You are the Saboteur, will you use your ${playerSuperpower?.name.toUpperCase()} skill?`}
           </p>
           <div className="flex justify-between gap-4">
             <Button
               variant="warning"
-              size="sm"
+              size="md"
               onClick={() => {
                 updatePassivePowerConfirmModal({ isOpen: false, type: null });
                 setIsPassivePowerActivated(false);

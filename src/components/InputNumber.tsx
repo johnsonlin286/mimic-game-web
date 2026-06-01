@@ -40,7 +40,7 @@ export default function InputNumber({ label, value, min, max, onChange, error }:
   return (
     <div className="flex flex-col gap-0.5">
       {label && <label htmlFor={label} className="text-sm font-nunito font-medium">{label}</label>}
-      <div className="w-full flex justify-between items-center border border-mint/50 rounded-full font-nunito font-medium text-lg p-2 focus:outline-none focus:ring-1 focus:ring-mint transition-all duration-300">
+      <div className="w-full flex justify-between items-center border border-mint/50 rounded-full font-nunito font-medium text-base md:text-lg p-2 focus:outline-none focus:ring-1 focus:ring-mint transition-all duration-300">
         <button type="button" className="cursor-pointer" onClick={() => handleChange('decrement')}>
         <CircleMinus className="w-6 h-6 hover:text-mint"/>
         </button>

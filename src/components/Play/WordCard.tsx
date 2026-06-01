@@ -27,14 +27,14 @@ export default function WordCard({ label, word, orientation = "portrait", frontS
 
   return (
     <div className="flex justify-center items-center w-full h-full">
-      <div role="button" {...attrs} className={`relative w-full h-full ${orientation === "portrait" ? "md:max-w-60 md:max-h-80 aspect-3/4" : "md:max-w-80 md:max-h-60 aspect-4/3"} perspective-1000 transform-3d transition-all duration-300 cursor-pointer ${isFlipped ? 'rotate-y-180' : ''}`}>
+      <div role="button" {...attrs} className={`relative w-full h-full ${orientation === "portrait" ? "md:max-w-80 md:max-h-[480px] aspect-3/4" : "md:max-w-80 md:max-h-[480px] aspect-4/3"} perspective-1000 transform-3d transition-all duration-300 cursor-pointer ${isFlipped ? 'rotate-y-180' : ''}`}>
         <div className="w-full h-full transform-3d">
           <div className={`absolute flex flex-col justify-center items-center gap-2 w-full h-full backface-hidden bg-light-navy rounded-2xl shadow-lg p-6 ${frontSideClassName}`}>
-            <h1 className="text-2xl font-bold text-center text-white uppercase">{word ? word : "You are the Unknown"}</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-center text-white uppercase">{word ? word : "You are the Unknown"}</h1>
             {!word && (
               <>
                 <Image src={`${IMAGE_ASSETS_URL}/images/agent-jellyfish.webp`} alt="agent-jellyfish" width={100} height={100} sizes="100vw" className="pointer-events-none" />
-                <p className="text-sm text-center">
+                <p className="text-sm md:text-base text-center">
                   Collect information from other players to guess the word.
                 </p>
               </>
@@ -42,8 +42,8 @@ export default function WordCard({ label, word, orientation = "portrait", frontS
           </div>
           <div className={`absolute flex flex-col justify-between items-center w-full h-full backface-hidden rotate-y-180 bg-light-navy rounded-2xl shadow-lg p-6 ${backSideClassName}`}>
             <div className="flex-1 flex flex-col gap-3 justify-center items-center">
-              {label ? <strong className="text-white text-2xl text-center font-fredoka font-bold">{label}</strong> : <Image src={`${IMAGE_ASSETS_URL}/images/morf-logo.webp`} alt="morf-logo" width={150} height={150} sizes="100vw" className="pointer-events-none"/>}
-              <p className="text-sm text-center text-white font-fredoka">
+              {label ? <strong className="text-white text-2xl md:text-3xl text-center font-fredoka font-bold">{label}</strong> : <Image src={`${IMAGE_ASSETS_URL}/images/morf-logo.webp`} alt="morf-logo" width={0} height={0} sizes="100vw" className="w-40 h-auto md:w-60 md:h-auto pointer-events-none"/>}
+              <p className="text-sm md:text-lg text-center text-white font-fredoka">
                 Tap and hold to reveal your secret word
               </p>
             </div>

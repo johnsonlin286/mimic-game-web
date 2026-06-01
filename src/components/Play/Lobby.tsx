@@ -41,7 +41,7 @@ export default function PlayLobby() {
           Start Game
         </Button>
       ) : (
-        <p className="text-center text-baby text-2xl font-bold my-5">Waiting for host to start the game...</p>
+        <p className="text-center text-baby text-xl md:text-2xl font-bold mt-5">Waiting for host to start the game...</p>
       )}
     </>
   )

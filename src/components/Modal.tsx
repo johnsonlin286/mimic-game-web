@@ -58,7 +58,7 @@ export default function Modal({ isOpen, onClose, dismissible = true, children }:
       <div className='modal-container fixed inset-0 flex items-center justify-center m-4 z-40' onClick={(e) => backdropClickHandler(e)}>
         <div
           ref={contentRef}
-          className="modal-content in w-full max-w-md bg-light-navy border-4 border-black rounded-2xl p-4 z-40"
+          className="modal-content in w-full max-w-xl bg-light-navy border-4 border-black rounded-2xl p-4 z-40"
           onClick={(e) => e.stopPropagation()}
         >
           {dismissible && <button onClick={handleClose} className="absolute top-2 right-2 cursor-pointer">

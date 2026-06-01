@@ -6,7 +6,6 @@ import { useToastStore } from "@/store/toast-state";
 import { alertSound, playSfx } from '@/utils/sounds';
 import useSocket from "@/hooks/useSocket";
 import Panel from "@/components/Panel";
-import Modal from "@/components/Modal";
 import SwitchInput from "@/components/SwitchInput";
 import InfoPopover from "@/components/InfoPopover";
 import SelectLanguages from "@/components/SelectLanguages";
@@ -19,7 +18,6 @@ interface PlayGameSetupProps {
 
 export default function PlayGameSetup({ isHost }: PlayGameSetupProps) {
   const router = useRouter();
-  const [gameSetupModal, setGameSetupModal] = useState(false);
   const [setupFormData, setSetupFormData] = useState<Partial<GameRule>>({
     roles: {
       minority: true,
@@ -103,17 +101,20 @@ export default function PlayGameSetup({ isHost }: PlayGameSetupProps) {
           break;
       }
     });
-    setGameSetupModal(false);
   }
 
   return (
     <>
       <Panel collapsible title="Game Setup" className="flex flex-col">
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-2.5 md:gap-4">
           {isHost ? (
             <>
+              {/* <div className="flex items-center justify-between gap-2">
+                <InfoPopover label="Image Mode" text="Show secret image instead of word (coming soon)."/>
+                <SwitchInput id="mode" disabled checked={false} onCheckedChange={() => null}/>
+              </div> */}
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 text-sm md:text-base">
                   <strong>{(() => {
                     const n = roomPlayers?.length ?? 0;
                     if (n >= 9) return "3";
@@ -125,7 +126,7 @@ export default function PlayGameSetup({ isHost }: PlayGameSetupProps) {
                 <SwitchInput id="minority" checked={setupFormData.roles?.minority || false} disabled onCheckedChange={(value) => handleSetupFormChange("roles", { minority: value })} />
               </div>
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 text-sm md:text-base">
                   {(() => {
                     const n = roomPlayers?.length ?? 0;
                     if (n >= 5) return <strong>1x </strong>;
@@ -140,14 +141,10 @@ export default function PlayGameSetup({ isHost }: PlayGameSetupProps) {
                 <InfoPopover label="Specialist" text="Player will randomly receive a special role. Minimum 5 players to enable." />
                 <SwitchInput id="superpower" checked={setupFormData.superpowers || false} /*disabled={roomPlayers?.length && roomPlayers?.length < 5 ? true : false}*/ onCheckedChange={(value) => handleSetupFormChange("superpowers", value)} />
               </div>
-              <div className="flex items-center justify-between gap-2">
-                <InfoPopover label="Image Mode" text="Show secret image instead of word."/>
-                <SwitchInput id="mode" disabled checked={false} onCheckedChange={() => null}/>
-              </div>
-              <div className="flex items-center gap-2 w-full">
+              <div className="flex items-center gap-2 w-full text-sm md:text-base">
                 <SelectLanguages socket={socket} value={setupFormData?.language} onChange={(value) => handleSetupFormChange("language", value)} />
               </div>
-              <div className="flex items-center gap-2 w-full">
+              <div className="flex items-center gap-2 w-full text-sm md:text-base">
                 <CategoriesOption socket={socket} lang={setupFormData?.language || "en"} selected={setupFormData?.category} onChange={(value) => handleSetupFormChange("category", value)} />
               </div>
               <div className="flex justify-end gap-2 w-full">
@@ -156,6 +153,12 @@ export default function PlayGameSetup({ isHost }: PlayGameSetupProps) {
             </>
           ) : (
             <>
+              {/* <div className="flex items-center justify-between gap-1.5">
+                <InfoPopover label="Image Mode" text="Show secret image instead of word."/>
+                <strong>
+                  Disabled
+                </strong>
+              </div> */}
               <div className="flex items-center justify-between gap-1.5">
                 <div className="flex items-center gap-1">
                   <strong>{(() => {
@@ -190,12 +193,6 @@ export default function PlayGameSetup({ isHost }: PlayGameSetupProps) {
                   {gameRule.superpowers ? "Enabled" : "Disabled"}
                 </strong>
               </div>
-              <div className="flex items-center justify-between gap-1.5">
-                <InfoPopover label="Image Mode" text="Show secret image instead of word."/>
-                <strong>
-                  Disabled
-                </strong>
-              </div>
               <div className="flex items-center justify-between gap-2 w-full">
                 <strong>Language</strong>
                 <strong>
@@ -211,87 +208,7 @@ export default function PlayGameSetup({ isHost }: PlayGameSetupProps) {
             </>
           )}
         </div>
-        {/* <div className="flex justify-between items-start gap-4">
-          <div className="flex flex-col">
-            <p className={`flex items-center gap-2 ${gameRule.roles?.minority ? "opacity-100" : "opacity-30"}`}>
-              <strong>
-                The Minority:
-              </strong>
-              <strong>
-                {(() => {
-                  const n = roomPlayers?.length ?? 0;
-                  if (n >= 9) return "3";
-                  if (n >= 7) return "2";
-                  return "1";
-                })()}
-              </strong>
-            </p>
-            <p className={`flex items-center gap-2 ${gameRule.roles?.blind ? "opacity-100" : "opacity-20"}`}>
-              <strong>
-                The Blind:
-              </strong>
-              <strong>
-                {(() => {
-                  const n = roomPlayers?.length ?? 0;
-                  if (n >= 5) return "1";
-                  if (n >= 11) return "2";
-                  return "0";
-                })()}
-              </strong>
-            </p>
-            <p className="flex items-center gap-2">
-              <strong>
-                Superpower:
-              </strong>
-              <strong>
-                {gameRule.superpowers ? "Yes" : "No"}
-              </strong>
-            </p>
-            <p className="flex items-center gap-2">
-              <strong>
-                Language:
-              </strong>
-              <strong>
-                {gameRule.language === "en" ? "English" : "Indonesian"}
-              </strong>
-            </p>
-            <p className="flex items-center gap-2">
-              <strong>
-                Category:
-              </strong>
-              <strong>
-                {gameRule.category}
-              </strong>
-            </p>
-          </div>
-          <div>
-            {isHost && (
-              <Button variant="secondary" size="sm" onClick={() => setGameSetupModal(true)} className="flex items-center justify-center gap-2">
-                <Wrench className="w-4 h-4" />
-                Edit
-              </Button>
-            )}
-          </div>
-        </div> */}
       </Panel>
-      <Modal isOpen={gameSetupModal} onClose={() => setGameSetupModal(false)}>
-        <div className="flex flex-col gap-4">
-          <h2 className="text-2xl font-bold">Game Setup</h2>
-          <div className="flex flex-col gap-1">
-            <SwitchInput id="minority" labelLeft="The Minority" checked={setupFormData.roles?.minority || false} disabled onCheckedChange={(value) => handleSetupFormChange("roles", { minority: value })} />
-            <small className="text-zinc-500">The Minority is who get different word than other players.</small>
-            <SwitchInput id="blind" labelLeft="The Blind" checked={setupFormData.roles?.blind || false} disabled={roomPlayers?.length && roomPlayers?.length < 5 ? true : false} onCheckedChange={(value) => handleSetupFormChange("roles", { blind: value })} />
-            <small className="text-zinc-500">The Blind is who not get any word.</small>
-            <SwitchInput id="superpower" labelLeft="Superpower" checked={setupFormData.superpowers || false} /*disabled={roomPlayers?.length && roomPlayers?.length < 5 ? true : false}*/ onCheckedChange={(value) => handleSetupFormChange("superpowers", value)} />
-          </div>
-          <SelectLanguages socket={socket} value={setupFormData?.language} onChange={(value) => handleSetupFormChange("language", value)} />
-          <h3 className="text-lg font-bold">Categories</h3>
-          <CategoriesOption socket={socket} lang={setupFormData?.language || "en"} selected={setupFormData?.category} onChange={(value) => handleSetupFormChange("category", value)} />
-          <div className="flex justify-end gap-2 w-full">
-            <Button variant="primary" size="sm" onClick={handleSaveGameSetup} className="w-full max-w-40">Save</Button>
-          </div>
-        </div>
-      </Modal>
     </>
   )
 }

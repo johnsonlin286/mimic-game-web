@@ -35,9 +35,9 @@ export default function RoomPlayers({ isHost }: RoomPlayersProps) {
 
   return (
     <div className="flex flex-col gap-2.5">
-      <h3 className="flex items-center gap-2 text-xl font-bold">
+      <h3 className="flex items-center gap-2 text-lg md:text-xl font-bold">
         Players:
-        <span className="text-xl">
+        <span className="text-lg md:text-xl">
           {roomPlayers.length} / {roomMaxPlayers}
         </span>
         <LabelPill label={gameRule.status} variant={gameRule.status === "waiting" ? "warning" : gameRule.status === "ready" ? "success" : gameRule.status === "playing" ? "danger" : "slate"} />
@@ -45,11 +45,11 @@ export default function RoomPlayers({ isHost }: RoomPlayersProps) {
       <ul className="flex flex-col gap-2.5">
         {roomPlayers.map((player, index) => (
           <li key={index} className="flex items-center justify-between gap-4 bg-slate-500 border-4 border-black rounded-2xl p-2.5">
-            <Image src={player.playerAvatar} alt={player.playerName} width={80} height={80} sizes="100vw" className="rounded-full border-4 border-black" />
-            <h2 className="flex items-center gap-2 flex-1 font-fredoka font-bold text-2xl capitalize">
+            <Image src={player.playerAvatar} alt={player.playerName} width={0} height={0} sizes="100vw" className="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-black" />
+            <h2 className="flex items-center gap-2 flex-1 font-fredoka font-bold text-xl md:text-2xl capitalize">
               {player.playerName}
-              {player.role === "host" && <Star className="w-8 h-8 text-warning rotate-90" />}
             </h2>
+            {player.role === "host" && <Star className="w-8 h-8 text-warning rotate-90" />}
             {isHost && player.playerEmail !== session?.user?.email && (
               <Button size="sm" variant="danger" onClick={() => emitKickPlayer(player.socketId, player.playerEmail)}>
                 Kick

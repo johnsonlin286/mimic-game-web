@@ -55,7 +55,7 @@ export default function Home() {
       <div className="flex justify-end w-full">
         <GoogleLoginBtn />
       </div>
-      <div className="flex flex-col items-center justify-center gap-4 w-full h-full">
+      <div className="flex flex-col items-center justify-center gap-3 md:gap-4 w-full h-full">
         <Image src={`${IMAGE_ASSETS_URL}/images/morf-logo.webp`} alt="morf-logo" width={0} height={0} sizes="100vw" priority className="w-full max-w-md" />
         <Panel className="w-full max-w-md">
           {!session && (
@@ -63,7 +63,7 @@ export default function Home() {
               <GoogleLoginBtn className="w-full"/>
             </div>
           )}
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-4 md:gap-5">
             {session && (
               <>
                 <Button variant="primary" onClick={openCreateRoomModal} className="w-full">
@@ -79,18 +79,18 @@ export default function Home() {
         {allRooms?.map((room, index) => (
           <Panel key={index} title={`Room ${index + 1}`} className="w-full max-w-md">
             <div className="flex justify-between items-center gap-2">
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1 md:gap-2">
                 <small>creator:</small>
-                <p className="font-fredoka font-bold text-white text-xl">{room.creatorName}</p>
+                <p className="font-fredoka font-bold text-white text-base md:text-xl">{room.creatorName}</p>
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1 md:gap-2">
                 <small>max:</small>
-                <p className="font-nunito font-bold text-lg">
+                <p className="font-nunito font-bold text-base md:text-lg">
                   {`${room.roomPlayers.length} / ${room.roomMaxPlayers}`}
                   <LabelPill label={room.gameRule.status} variant={room.gameRule.status === "waiting" ? "warning" : room.gameRule.status === "ready" ? "success" : room.gameRule.status === "playing" ? "danger" : "slate"} className="ml-2" />
                 </p>
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1 md:gap-2">
                 <small></small>
                 {room.isPublic ? <Button variant="primary" size="sm" disabled={room.gameRule.status === "playing" || room.gameRule.status === "finished"} onClick={() => handleJoinRoom(room.roomId)}>Join</Button> : <span >Offline</span>}
               </div>

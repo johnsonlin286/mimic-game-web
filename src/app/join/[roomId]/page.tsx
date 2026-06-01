@@ -55,29 +55,29 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
     <Container className="flex flex-col items-center gap-4 w-full h-full py-5">
       <Image src={`${IMAGE_ASSETS_URL}/images/invitation.webp`} alt="morf-invitation" width={0} height={0} sizes="100vw" priority className="w-full max-w-sm" />
       <Panel className="w-full max-w-md">
-        <div className="flex flex-col items-center gap-2 justify-center w-full">
+        <div className="flex flex-col items-center gap-3 justify-center w-full">
         {isLoadingRoom ? (
-            <p className="text-sm font-fredoka text-white animate-pulse">creating invitation...</p>
+            <p className="text-sm md:text-base font-fredoka text-mint animate-pulse">creating invitation...</p>
           ) : roomError ? (
-            <p className="text-sm font-nunito text-red-600">{(() => {
+            <p className="text-sm md:text-base font-nunito text-danger">{(() => {
               const errorData = JSON.parse(roomError.message) as ErrorResponse;
               return errorData.message;
             })()}</p>
         ) :  (
           <>
-            <h2 className="text-2xl font-fredoka font-bold text-white uppercase">Invitation</h2>
-            <p className="text-sm font-nunito text-white">
-              Agent, you are invited to ....
+            <h2 className="text-3xl md:text-4xl font-fredoka font-bold text-warning uppercase">Invitation</h2>
+            <p className="text-base md:text-lg font-nunito text-white text-center font-semibold">
+              Agent, you are invited to a classified MORF briefing. Bring your best bluff—trust no one.
             </p>
             {roomData &&  (
               <>
                 <div className="flex items-center gap-2 w-full">
                   <p className="flex flex-col gap-1 font-fredoka text-white w-1/2">
-                    <small className="text-sm font-nunito text-white">creator:</small>
-                    <strong className="uppercase">{(roomData as RoomResponseData)?.creatorName}</strong>
+                    <small className="text-sm md:text-base font-nunito text-white">creator:</small>
+                    <strong>{(roomData as RoomResponseData)?.creatorName}</strong>
                   </p>
                   <p className="flex flex-col gap-1 font-fredoka text-white w-1/2">
-                    <small className="text-sm font-nunito text-white">max:</small>
+                    <small className="text-sm md:text-base font-nunito text-white">max:</small>
                     <span className="flex items-center gap-2">
                       <span>{(roomData as RoomResponseData)?.roomPlayers.length} / {(roomData as RoomResponseData)?.roomMaxPlayers}</span>
                       <LabelPill label={(roomData as RoomResponseData)?.gameRule.status} variant={(roomData as RoomResponseData)?.gameRule.status === "waiting" ? "warning" : (roomData as RoomResponseData)?.gameRule.status === "ready" ? "success" : (roomData as RoomResponseData)?.gameRule.status === "playing" ? "danger" : "slate"} />
@@ -95,7 +95,7 @@ export default function JoinPage({ params }: { params: Promise<{ roomId: string 
                     </>
                   ) : (
                     <>
-                      <span className="text-sm font-nunito text-white text-center">Please sign in to join the room</span>
+                      <span className="text-sm md:text-base font-nunito text-white text-center">Please sign in to join the room</span>
                       <GoogleLoginBtn />
                     </>
                   )}

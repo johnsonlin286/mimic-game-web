@@ -21,6 +21,7 @@ export const useRoomStore = create<RoomState>()(
       gameData: {
         players: [],
         wordPairList: [],
+        gamePhase: undefined,
       },
       isPublic: true,
       createdAt: new Date(),

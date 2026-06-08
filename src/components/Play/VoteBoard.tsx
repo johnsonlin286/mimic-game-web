@@ -16,6 +16,7 @@ import RestartBtn from "@/components/Play/RestartBtn";
 import InfoPopover from "../InfoPopover";
 
 interface VoteBoardProps {
+  playerRole: string;
   playerSuperpower: Superpower;
 }
 
@@ -52,7 +53,7 @@ function isVoteResultTied(players: PlayerWithRole[]) {
   return voteCounts.filter((count) => count === maxVotes).length >= 2;
 }
 
-export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
+export default function VoteBoard({ playerRole, playerSuperpower }: VoteBoardProps) {
   const [voteModal, setVoteModal] = useState(false);
   const [passivePowerConfirmModal, setPassivePowerConfirmModal] = useState<PassivePowerConfirmModalState>({
     isOpen: false,
@@ -74,9 +75,9 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
 
   const winStatusImage = (winStatus: string) => {
     switch (winStatus) {
-      case "The Shifter":
+      case "The MORF":
         return `${IMAGE_ASSETS_URL}/images/minority-win.webp`;
-      case "The Unknown Origin":
+      case "The ROGUE":
         return `${IMAGE_ASSETS_URL}/images/minority-win.webp`;
       case "The Agents":
         return `${IMAGE_ASSETS_URL}/images/majority-win.webp`;
@@ -150,6 +151,12 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
           return "The ROGUE Got Caught";
         case "Saboteur is the winner":
           return "The Saboteur";
+        case "Blind got eliminated":
+          return "The ROGUE Eliminated";
+        case "Minority got eliminated":
+          return "The MORF Eliminated";
+        case "Vote tied":
+          return "The Vote is Tied";
         default:
           return "none";
       }
@@ -255,13 +262,30 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
     };
 
     const handleGameBlindGotCaught = () => {
-      setWinStatus("The Unknown Origin Got Caught");
+      setWinStatus("The ROGUE Got Caught");
+      if (playerRole !== "blind") return;
       setGuessWordModal(true);
     };
 
-    const handleGameBlindGuessTheWordCorrectly = () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleReGuessTheWordSuccess = (response: any) => {
+      if (!response) return;
+      setGuessWordModal(true);
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleReGuessTheWordFailed = (response: any) => {
+      if (!response) return;
+      setToastRef.current(response.message, "error");
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleGameBlindGuessTheWordCorrectly = (response: any) => {
+      if (!response) return;
+      const { outcomeMessage, room } = response.data;
+      setWinStatus(mapOutcomeMessageToWinStatus(outcomeMessage));
       setGuessWordModal(false);
-      setWinStatus("The Unknown Origin");
+      setRoomRef.current(room);
     };
 
     const handleGameBlindGuessTheWordIncorrectly = (response: GameBlindGuessTheWordIncorrectlyResponse) => {
@@ -299,6 +323,22 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
       resetVoteBoardUi();
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleRoomRejoinSuccess = (response: any) => {
+      if (!response) return;
+      // setRoomRef.current(response.data);
+      console.log("handleRoomRejoinSuccess: ", response);
+      const { gamePhase, voteResult } = response.data;
+      if (gamePhase === 'vote' || gamePhase === 'vote-result') {
+        setVoteModal(true);
+        if (gamePhase === 'vote-result') {
+          setWinStatus(mapOutcomeMessageToWinStatus(voteResult));
+        }
+      } else if (gamePhase === 'guess') {
+        // TODO: handle guess phase
+      }
+    };
+
     socket.on("listen-game-start-vote", handleGameStartVote);
     socket.on("listen-game-vote-response", handleGameVoteResponse);
     socket.on("listen-game-all-players-voted", handleGameAllPlayersVoted);
@@ -307,11 +347,14 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
     socket.on("listen-game-calculate-results", handleGameCalculateResults);
     socket.on("listen-game-superpower-triggered", handleGameSuperpowerTriggered);
     socket.on("listen-game-blind-got-caught", handleGameBlindGotCaught);
+    socket.on("listen-game-re-guess-success", handleReGuessTheWordSuccess);
+    socket.on("listen-game-re-guess-failed", handleReGuessTheWordFailed)
     socket.on("listen-game-blind-guess-the-word-correctly", handleGameBlindGuessTheWordCorrectly);
     socket.on("listen-game-blind-guess-the-word-incorrectly", handleGameBlindGuessTheWordIncorrectly);
     socket.on("listen-game-continue-success", handleGameContinueSuccess);
     socket.on("listen-game-restart-success", handleGameRestartSuccess);
     socket.on("listen-game-initialize-success", handleGameInitializeSuccess);
+    socket.on("room-rejoin-success", handleRoomRejoinSuccess);
 
     return () => {
       socket.off("listen-game-start-vote", handleGameStartVote);
@@ -322,13 +365,16 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
       socket.off("listen-game-calculate-results", handleGameCalculateResults);
       socket.off("listen-game-superpower-triggered", handleGameSuperpowerTriggered);
       socket.off("listen-game-blind-got-caught", handleGameBlindGotCaught);
+      socket.off("listen-game-re-guess-failed", handleReGuessTheWordFailed);
+      socket.off("listen-game-re-guess-success", handleReGuessTheWordSuccess);
       socket.off("listen-game-blind-guess-the-word-correctly", handleGameBlindGuessTheWordCorrectly);
       socket.off("listen-game-blind-guess-the-word-incorrectly", handleGameBlindGuessTheWordIncorrectly);
       socket.off("listen-game-continue-success", handleGameContinueSuccess);
       socket.off("listen-game-restart-success", handleGameRestartSuccess);
       socket.off("listen-game-initialize-success", handleGameInitializeSuccess);
+      socket.off("room-rejoin-success", handleRoomRejoinSuccess);
     };
-  }, [socket]);
+  }, [guessWordModal, playerRole, socket]);
 
   const confirmUsePassivePower = useCallback(() => {
     if (!playerSuperpower?.name) return;
@@ -372,15 +418,24 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
     })
   }, [socket, roomId, session, isPassivePowerActivated, playerSuperpower, setToast])
 
+  const openGuessWordModal = useCallback(() => {
+    if (!session?.user?.email || !socket || !roomId) return;
+    socket.emit("game:re-guess-the-word", {
+      roomId,
+      playerEmail: session.user.email,
+    });
+  }, [socket, roomId, session])
+
   const submitGuessWord = useCallback(() => {
     if (!session?.user?.email || !socket || !roomId) return;
-    if (guessWord.length < 3) {
+    const sanitizedGuessWord = guessWord.replace(/[^a-zA-Z]/g, '').trim().replace(/^\s+|\s+$/g, '').toLowerCase();
+    if (sanitizedGuessWord.length < 3) {
       return;
     }
     socket.emit("game:blind-guess-the-word", {
       roomId,
       playerEmail: session.user.email,
-      guessWord: guessWord.toLowerCase(),
+      guessWord: sanitizedGuessWord,
     });
   }, [socket, roomId, session, guessWord])
 
@@ -459,12 +514,48 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
                   </div>
                 )}
               </>
-            ) : winStatus !== null && winStatus !== "none" ? (
+            ) : winStatus !== "none" ? (
               <>
-                {winStatus === "The Unknown Origin Got Caught" ? (
-                  <p className="text-lg md:text-xl text-center font-bold">
-                    The Unknown Origin got caught!
-                  </p>
+                {winStatus === "The ROGUE Got Caught" ? (
+                  <>
+                    <p className="text-lg md:text-xl text-center font-bold">
+                      {playerRole === "blind" ? "You got caught!" : "The ROGUE got caught!"}
+                    </p>
+                    {!isHost && playerRole === "blind" && (
+                      <Button variant="primary" size="md" onClick={openGuessWordModal} className="w-full">
+                        Guess the word
+                      </Button>
+                    )}
+                    {isHost && playerRole !== "blind" && (
+                      <div className="flex justify-between gap-4">
+                        <RestartBtn isHost={isHost} />
+                        <Button variant="primary" size="md" onClick={openGuessWordModal} className="w-full">
+                          Ask to guess the word
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                ) : winStatus === "The ROGUE Eliminated" || winStatus === "The MORF Eliminated" || winStatus === "The Vote is Tied" ? (
+                  <>
+                    <p className="text-2xl md:text-4xl text-center font-fredoka font-bold mx-auto">
+                      No winner yet!
+                      <br />
+                      {winStatus}!
+                    </p>
+                    <ul className="flex flex-col gap-2 justify-center items-center list-decimal pl-4">
+                      {gameData?.players?.filter((player: PlayerWithRole) => !player.isAlive).map((player: PlayerWithRole) => (
+                        <li key={player.playerEmail} className="text-white">
+                          <strong className="font-semibold">{player.playerName}</strong> Eliminated
+                        </li>
+                      ))}
+                    </ul>
+                    {isHost && (
+                      <div className="flex justify-between gap-4">
+                        <RestartBtn isHost={isHost} />
+                        <Button variant="primary" size="md" onClick={continueGame} className="w-full max-w-sm mx-auto">Continue</Button>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <>
                     <p className="text-xl md:text-2xl text-center text-white font-fredoka font-bold">
@@ -509,7 +600,7 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
                 <p className="text-2xl md:text-4xl text-center font-fredoka font-bold mx-auto">
                   No winner yet!
                   <br />
-                  Vote result is tied!
+                  Agent got eliminated!
                 </p>
                 {superpowerTriggered && (
                   <p className="text-lg md:text-xl text-center text-danger max-w-3xs mx-auto">
@@ -524,7 +615,10 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
                   ))}
                 </ul>
                 {isHost && (
-                  <Button variant="primary" size="md" onClick={continueGame} className="w-full max-w-sm mx-auto">Continue</Button>
+                  <div className="flex justify-between gap-4">
+                    <RestartBtn isHost={isHost} />
+                    <Button variant="primary" size="md" onClick={continueGame} className="w-full max-w-sm mx-auto">Continue</Button>
+                  </div>
                 )}
               </>
             )}
@@ -534,8 +628,9 @@ export default function VoteBoard({ playerSuperpower }: VoteBoardProps) {
       <Modal isOpen={guessWordModal} dismissible={false} onClose={() => setGuessWordModal(false)}>
         <div className="flex flex-col gap-4">
           <h2 className="text-xl md:text-2xl font-bold">Guess the Word</h2>
-          <div className="flex flex-col gap-2">
-            <Input label="Guess the Word" value={guessWord} onChange={(e) => setGuessWord(e.target.value)} />
+          <p>You got caught! Guess the word correctly to win the game.</p>
+          <div className="flex flex-col gap-4">
+            <Input value={guessWord} onChange={(e) => setGuessWord(e.target.value)} inputClassName="text-center uppercase"/>
             <Button variant="primary" size="md" onClick={submitGuessWord}>Guess</Button>
           </div>
         </div>

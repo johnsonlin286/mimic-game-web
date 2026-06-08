@@ -52,7 +52,7 @@ export default function ModalSearch({ isOpen, onClose, roomId, playerName, playe
     }))
   }, [roomId, playerName, playerEmail]);
 
-  const { mutate: searchRoomMutation, isPending } = useMutation({
+  const { mutate: searchRoomMutation } = useMutation({
     mutationFn: searchRoom,
     onMutate: () => {
       setIsLoading(true);
@@ -60,8 +60,10 @@ export default function ModalSearch({ isOpen, onClose, roomId, playerName, playe
     onSuccess: () => {
       const playerAvatar = randomAvatar();
       joinRoom(modalFormData.roomId, modalFormData.playerEmail, modalFormData.playerName, playerAvatar);
+      setIsLoading(false);
     },
     onError: (error) => {
+      setIsLoading(false);
       const errorData = JSON.parse(error.message) as ErrorResponse;
       setModalFormError({
         roomId: errorData.message,
@@ -108,8 +110,8 @@ export default function ModalSearch({ isOpen, onClose, roomId, playerName, playe
         {joinRoomError && <p className="text-red-500">{joinRoomError}</p>}
         <Input type="text" label="Room ID" placeholder="Input Room ID" value={modalFormData.roomId} onChange={(e) => handleFormChange({ key: "roomId", value: e.target.value })} error={modalFormError?.roomId} inputClassName="uppercase text-center"/>
         <Input type="text" label="Agent Code" placeholder="Six Seven Eight" value={modalFormData.playerName} autoFocus={true} onChange={(e) => handleFormChange({ key: "playerName", value: e.target.value })} error={modalFormError?.playerName} inputClassName="text-center" />
-        <Button variant="success" onClick={handlerRoomValidation} disabled={isPending || isLoading || isJoinRoomPending}>
-          {isPending || isLoading || isJoinRoomPending ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : "Join Room"}
+        <Button variant="success" onClick={handlerRoomValidation} disabled={isLoading || isJoinRoomPending}>
+          {isLoading || isJoinRoomPending ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : "Join Room"}
         </Button>
       </div>
     </Modal>

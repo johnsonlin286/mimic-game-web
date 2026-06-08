@@ -42,6 +42,7 @@ interface GameData {
     majorityWord: string;
     minorityWord: string;
   }[];
+  gamePhase: "start" | "vote" | "vote-result" | "guess" | undefined;
 }
 
 interface RoomResponseData {
@@ -51,7 +52,7 @@ interface RoomResponseData {
   roomMaxPlayers: number;
   roomPlayers: RoomPlayerData[];
   gameRule: GameRule;
-  // gameData: GameData;
+  gameData?: GameData;
   isPublic: boolean;
   createdAt: Date;
   updatedAt: Date;

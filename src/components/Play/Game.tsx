@@ -42,7 +42,7 @@ export default function PlayGame() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleGameInitializedPlayer = (response: any) => {
       if (!response) return;
-      // console.log("handleGameInitializedPlayer", response.data.gameWord, response.data.superpower);
+      console.log("handleGameInitializedPlayer", response.data.gameWord, response.data.superpower);
       setGameWord(response.data.gameWord);
       setSuperpower(response.data.superpower ?? null);
     };
@@ -199,7 +199,7 @@ export default function PlayGame() {
         </CardStack>
       ) : <></>}
       <div className="flex flex-col justify-center items-center">
-        <VoteBoard playerSuperpower={superpower as Superpower} />
+        <VoteBoard playerRole={gameWord === null ? "blind" : "player"} playerSuperpower={superpower as Superpower} />
       </div>
       {overlay && (
         <div className="fixed inset-0 flex justify-center items-center bg-black/50 backdrop-blur-xl z-40">

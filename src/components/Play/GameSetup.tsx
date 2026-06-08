@@ -133,9 +133,9 @@ export default function PlayGameSetup({ isHost }: PlayGameSetupProps) {
                     if (n >= 11) return <strong>2x </strong>;
                     return "";
                   })()}
-                  <InfoPopover label="Rogue Agent" text={`Rogue Agent is who don't get any word. Minimum 5 players to enable. `} />
+                  <InfoPopover label="ROGUE Agent" text={`ROGUE Agent is who don't get any word. Minimum 5 players to enable. `} />
                 </div>
-                <SwitchInput id="blind" checked={setupFormData.roles?.blind || false} disabled={roomPlayers?.length && roomPlayers?.length < 5 ? true : false} onCheckedChange={(value) => handleSetupFormChange("roles", { blind: value })} />
+                <SwitchInput id="blind" checked={setupFormData.roles?.blind || false} /*disabled={roomPlayers?.length && roomPlayers?.length < 5 ? true : false}*/ onCheckedChange={(value) => handleSetupFormChange("roles", { blind: value })} />
               </div>
               <div className="flex items-center justify-between gap-2">
                 <InfoPopover label="Specialist" text="Player will randomly receive a special role. Minimum 5 players to enable." />
@@ -181,7 +181,7 @@ export default function PlayGameSetup({ isHost }: PlayGameSetupProps) {
                     if (n >= 11) return <strong>2x </strong>;
                     return "";
                   })()}
-                  <InfoPopover label="Unknown Origin" text="Unknown Origin is who don't get any word. Minimum 5 players to enable." />
+                  <InfoPopover label="ROGUE Agent" text="ROGUE Agent is who don't get any word. Minimum 5 players to enable." />
                 </div>
                 <strong className={`${gameRule.roles?.blind ? 'text-mint' : ''}`}>
                   {gameRule.roles?.blind ? "Enabled" : "Disabled"}
